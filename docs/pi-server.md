@@ -127,7 +127,9 @@ screen's Wi-Fi setup flow; the helper does not receive general root access.
 
 ### Finding the server
 
-The server announces itself on your network, using avahi (`_noor-frame._tcp`). A screen
+The server announces itself on your network as `_noor-frame._tcp`: on a Pi through Avahi, and
+on a Mac, Linux or Windows computer running `npm start` through its own `dns-sd` or
+`avahi-publish`. So a screen Pi also finds a server on another computer. A screen
 installed without `--server` looks for that announcement, and looks again whenever the server
 stops answering, so it follows the server to a new address. If your network blocks these
 announcements, install the screen with `--server` and the server's address.

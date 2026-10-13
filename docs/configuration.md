@@ -226,6 +226,7 @@ All optional. Set them before `npm start`, or on a Raspberry Pi in `/etc/noor-fr
 | `FRAME_SECRET` | `data/secret.key` | The key for encrypting saved API keys. If set, `secret.key` isn't used or created. Keep it the same, or saved keys stop working. |
 | `STATIC_DIR` | `apps/frame/dist` | The built dashboard to serve. |
 | `NOOR_PUBLIC_URL` | `http://<this computer's IP>:PORT` | Node.js home server only (including the Pi install): the address phones should use in QR codes. Set it if the automatic one is wrong, for example `http://noor.local:8787`. Cloudflare Workers do not read this variable. |
+| `NOOR_ANNOUNCE` | on | Set to `0` to stop the server announcing itself on the network (`_noor-frame._tcp`), which lets frames and Pi screens find it. `npm run dev` doesn't announce. |
 | `NOOR_AUTO_APPROVE` | on | Set to `0` to stop approving new screens automatically. |
 | `NOOR_TRUST_PROXY` | none | Node.js only. Behind your own trusted proxy on the same computer: `cloudflare` or `1`. See below. |
 | `NOOR_SETUP_CODE` | none | A secret of 12 or more characters. Opening the dashboard once with `?setup=<code>` approves that screen. Use it with `NOOR_AUTO_APPROVE=0`. |

@@ -42,23 +42,41 @@ See `androidBridge` and `piBridge` at the top of the page's script for the two v
 
 ## What each platform does today
 
-| | Android frame | Raspberry Pi | Browser / TV | Fire TV / Google TV | Apple TV |
-| --- | --- | --- | --- | --- | --- |
-| Where | `apps/kiosk-android` | `apps/kiosk-pi` | any browser | planned | planned |
-| Starts by itself | Home app | systemd + cage | — | launched by hand¹ | — |
-| Full screen | ✅ | ✅ | browser full screen | ✅ | — |
-| Recovers when the server is away | ✅ Wi-Fi page, retries | ✅ connecting screen | offline copy (https or localhost) | ✅ same as Android | — |
-| Wi-Fi on the screen | ✅ Noor's keyboard | ✅ touch screens | — | the TV's own settings | — |
-| Wi-Fi from a phone | — | ✅ setup network | — | — | — |
-| Change the server address | ✅ | ✅ | type it | ✅ | — |
-| Volume (Settings → Sound) | ✅ | ✅ (ALSA / PipeWire) | — | the remote | — |
-| Screen off at night | — (night clock) | ✅ | — | — (night clock) | — |
-| Remote control (arrows, OK, Back) | — | ✅ with `?tv` | ✅ TV mode | ✅ TV mode | — |
-| Boot animation | ✅ `bootanimation.zip` | ✅ `--splash` (wall frames) | — | — | — |
+Noor supports three kinds of screen: the **Android photo frame**, the **Raspberry Pi** and
+**any modern browser** (including a TV's own browser). The Pi setup is covered by automated
+tests and a Debian container, but hasn't been tried on real Pi hardware yet; reports are
+welcome.
 
-¹ Fire TV doesn't let apps replace its home screen.
+| | Android frame | Raspberry Pi | Browser / TV |
+| --- | --- | --- | --- |
+| Where | `apps/kiosk-android` | `apps/kiosk-pi` | any browser |
+| Starts by itself | Home app | systemd + cage | — |
+| Full screen | ✅ | ✅ | browser full screen |
+| Finds the server by itself | ✅ (`_noor-frame._tcp`) | ✅ (`_noor-frame._tcp`) | — (type the address) |
+| Recovers when the server is away | ✅ Wi-Fi page, retries | ✅ connecting screen | offline copy (https or localhost) |
+| Wi-Fi on the screen | ✅ Noor's keyboard | ✅ touch screens | — |
+| Wi-Fi from a phone | — | ✅ setup network | — |
+| Change the server address | ✅ | ✅ | type it |
+| Volume (Settings → Sound) | ✅ | ✅ (ALSA / PipeWire) | — |
+| Screen off at night | — (night clock) | ✅ | — |
+| Remote control (arrows, OK, Back) | — | ✅ with `?tv` | ✅ TV mode |
+| Boot animation | ✅ `bootanimation.zip` | ✅ `--splash` (wall frames) | — |
 
-## Fire TV and Google TV
+**Finding the server.** Every Noor server announces itself on the home network as
+`_noor-frame._tcp` (`apps/server/src/announce.js`: `dns-sd` on macOS and on Windows with
+Bonjour, `avahi-publish` on Linux, Avahi's service file on a Pi set up by the installer).
+Android frames and Pi screens look for it when they have no server yet, or when theirs stops
+answering, so a server that moves to a new address is found again. With several servers on one
+network, the Android frame lists them to choose from. `NOOR_ANNOUNCE=0` stops a server
+announcing itself; `npm run dev` doesn't announce.
+
+## Ideas for later
+
+These aren't supported and aren't scheduled. They're written down so anyone who wants to add
+one knows where to start. Until then, a TV's own browser with `?tv` works, and a Mac or iPhone
+can AirPlay a browser showing the dashboard.
+
+### Fire TV and Google TV
 
 Fire TV runs Fire OS, which is built on Android, with a modern WebView. The Android app is
 most of the way there:
@@ -72,7 +90,7 @@ most of the way there:
 - **Starting it.** Fire TV can't make Noor its home screen. Families start Noor from the apps
   row, and it keeps the screen awake while it's open.
 
-## Apple TV
+### Apple TV
 
 tvOS has no web view, so the dashboard can't run inside an Apple TV app. An Apple TV version
 would be a **native app** (SwiftUI) that draws its own screens from the same server API:
@@ -83,8 +101,7 @@ would be a **native app** (SwiftUI) that draws its own screens from the same ser
 - **What it reuses:** the server, the integrations, the companion app and household settings.
 - **What it re-creates:** the screens themselves, in Swift.
 
-It's the largest of the platforms to add. Until then, a Mac or iPhone can AirPlay a browser
-showing the dashboard.
+It's the largest of the platforms to add.
 
 ## Adding a platform
 

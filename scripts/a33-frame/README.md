@@ -14,6 +14,12 @@ Run every command from the **root of the noor-frame checkout**. Confirm it by
 running `test -f package.json && test -d scripts/a33-frame`; the directory name
 does not matter. Do not run these commands from a different project checkout.
 
+**Start with Wes Bos's
+[PF1007L start here](https://github.com/wesbos/photo-frame-dashboard/blob/main/docs/pf1007l-start-here.md) page.** It
+identifies the board and tries the simpler routes first (ADB over USB, then the
+network). Use this guide when you want a full verified backup before changing
+anything, or when those routes don't work on your unit.
+
 This guide records the route tested on one frame, including the paths that
 failed and the 12 MHz eMMC fix:
 
@@ -49,7 +55,7 @@ related board, but its unpublished reader is not needed for this workflow.
 
 The working direct route was host USB-C → USB-C-to-USB-A adapter → known USB data
 cable → frame. The adapter was verified by mounting a USB thumb drive. FEL also
-worked through a CalDigit dock, but the direct connection was used for the
+worked through a USB-C dock, but the direct connection was used for the
 successful backup. Use stable power and a spare SD card; the tested card
 was 128 GB. The host needs Git, Python 3, make, a C compiler, libusb/libfdt
 headers and Docker. On a Homebrew Mac, the host dependencies are:

@@ -8,10 +8,13 @@ It's built without Gradle, with one Java file and one HTML page. It was tested o
 the AEEZO PF1007L (Allwinner A33, Android 6.0.1). It should suit other Android 6+
 frames whose WebView is new enough, or can be made new enough.
 
-If you are starting with a new frame, read the
-[Android frame overview](../../docs/android-frame.md) first. Getting root ADB on
-the PF1007L is covered in the [A33 frame guide](../../scripts/a33-frame/README.md).
-This page starts from a frame with working root ADB.
+**Starting with a new frame?** First get it working with
+[Wes Bos's photo-frame-dashboard](https://github.com/wesbos/photo-frame-dashboard#which-frame-do-you-have): identify your
+board and follow his guide for it until you have ADB. Then come back here. The
+[Android frame overview](../../docs/android-frame.md) explains the whole route,
+and our [A33 frame guide](../../scripts/a33-frame/README.md) is the verified
+backup-and-root route for the PF1007L. This page starts from a frame with
+working ADB (root ADB for the WebView update).
 
 | Property | Tested unit |
 | --- | --- |

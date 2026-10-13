@@ -8,13 +8,32 @@
 
 Wall-mounted Android photo frames are cheap, have good screens and draw little
 power. They're also locked down, run old Android, and ship with vendor software
-you may not want on your network. This page is the map. Two detailed guides do
-the work:
+you may not want on your network.
 
-1. **[A33 frame guide](../scripts/a33-frame/README.md):** back up the frame and
-   turn on root ADB.
-2. **[Android kiosk guide](../apps/kiosk-android/README.md):** install Noor,
-   update the WebView, and make Noor the Home app.
+## Bought a frame? Start with Wes Bos's guides
+
+Getting into the frame is the hard part, and it depends on which board is
+inside. That work lives in Wes's repo, so begin there:
+
+1. **Identify your frame.** Check **Settings → About** on the frame, then find
+   it in his [Which frame do you have?](https://github.com/wesbos/photo-frame-dashboard#which-frame-do-you-have) section
+   and [device index](https://github.com/wesbos/photo-frame-dashboard/blob/main/docs/devices.md). Frames sold under the same
+   name can have different boards.
+2. **Follow his guide for that board** until you can reach the frame with ADB
+   over USB. For the PF1007L that's his
+   [PF1007L start here](https://github.com/wesbos/photo-frame-dashboard/blob/main/docs/pf1007l-start-here.md) page. Read
+   his notes on the vendor app before the frame goes online.
+3. **Come back here** and continue with the
+   [Android kiosk guide](../apps/kiosk-android/README.md): update the WebView if
+   needed, install Noor, make it the Home app and disable the vendor apps.
+
+This repo adds two things for the frame we tested:
+
+- **[A33 frame guide](../scripts/a33-frame/README.md):** our verified route for
+  the AEEZO PF1007L (a full read-only eMMC backup, then root ADB), if you want
+  that extra safety net or his route doesn't fit your unit.
+- **[Android kiosk guide](../apps/kiosk-android/README.md):** installing Noor
+  on any Android 6+ frame that has ADB.
 
 > **Risk.** Some stages write to the frame's internal storage. A skipped check
 > can leave it unbootable. Everything here was tested on **one** frame model.

@@ -77,6 +77,10 @@ npm install
 npm run dev       # open http://localhost:5174 (the dashboard, with hot reload)
 ```
 
+With `npm run dev`, a phone on the same Wi-Fi opens the companion at
+`http://<your computer's IP>:5174/companion/`. The dashboard's **Settings → Open on phone**
+QR code points there.
+
 To run it the way a Pi or home computer would:
 
 ```sh
@@ -139,11 +143,15 @@ athan) and **M** for the menu.
 
 | Screen | Guide |
 | --- | --- |
-| Raspberry Pi (server, screen, or both) | [docs/pi-server.md](docs/pi-server.md): `sudo /opt/noor-frame/apps/kiosk-pi/install.sh both`. A screen Pi with no Wi-Fi starts a **Noor Frame Setup** network and shows a QR code; join it from your phone and pick your home Wi-Fi. |
-| Android photo frame | [docs/android-frame.md](docs/android-frame.md): the full route for the tested AEEZO PF1007L, from a verified backup to Noor as the Home app. |
+| Raspberry Pi (server, screen, or both) | [docs/pi-server.md](docs/pi-server.md): `sudo /opt/noor-frame/apps/kiosk-pi/install.sh both`. A screen Pi with no Wi-Fi starts a **Noor Frame Setup** network and shows a QR code; join it from your phone and pick your home Wi-Fi. Covered by automated tests, but not yet tried on real Pi hardware; reports welcome. |
+| Android photo frame | **Bought a frame? Start at [Wes Bos's photo-frame-dashboard](https://github.com/wesbos/photo-frame-dashboard#which-frame-do-you-have).** Identify your frame there and follow his guide for it until you have ADB. Then come back to [docs/android-frame.md](docs/android-frame.md) to install Noor. |
 | TV or any browser | Open the server's address, for example `http://noor.local:8787`. See below. |
 | Cloudflare (server only) | [docs/configuration.md](docs/configuration.md#hosting-on-cloudflare-optional). |
-| Fire TV, Google TV, Apple TV | Planned. [docs/platforms.md](docs/platforms.md) compares every platform and sets out how to add one. |
+
+Screens on your Wi-Fi find the server by themselves: it announces itself on the network, and
+the Android frame and Pi screens look for it. Fire TV, Google TV and Apple TV apps aren't
+supported; [docs/platforms.md](docs/platforms.md) compares the platforms and lists ideas for
+later.
 
 **On a TV or browser:**
 
