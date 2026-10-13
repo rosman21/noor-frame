@@ -8,7 +8,7 @@
 # Options:
 #   --server URL          (frame) the server's address, e.g. http://noor.local:8787
 #                         Without it, the screen finds the server on the network by itself.
-#   --rotate 90|180|270   (frame, both) turn the picture for a portrait or upside-down screen
+#   --rotate 180          (frame, both) turn the picture for an upside-down landscape mount
 #   --auto-update         update from git every night at 3:30
 #   --no-hotspot          (frame, both) never start the Wi-Fi setup network
 #   --splash              (frame, both) Noor's boot splash instead of the Raspberry Pi logo and
@@ -25,7 +25,7 @@ SERVER_URL="" ROTATE="" AUTO_UPDATE=0 HOTSPOT=1 SPLASH=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --server) SERVER_URL="${2:?--server needs an address}"; shift 2 ;;
-    --rotate) ROTATE="${2:?--rotate needs 90, 180 or 270}"; shift 2 ;;
+    --rotate) ROTATE="${2:?--rotate takes 180 for an upside-down landscape mount}"; shift 2 ;;
     --auto-update) AUTO_UPDATE=1; shift ;;
     --no-hotspot) HOTSPOT=0; shift ;;
     --splash) SPLASH=1; shift ;;
@@ -38,7 +38,8 @@ note() { printf '    %s\n' "$*"; }
 die()  { printf '\n\033[1;31mError:\033[0m %s\n' "$*" >&2; exit 1; }
 
 case "$ROLE" in server|frame|both) ;; *) sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;; esac
-case "$ROTATE" in ''|90|180|270) ;; *) die "--rotate takes 90, 180 or 270" ;; esac
+case "$ROTATE" in ''|0|180) ;; *) die "Noor is designed for landscape screens; --rotate takes 180 for an upside-down mount" ;; esac
+[ "$ROTATE" != 0 ] || ROTATE=""
 [ "$(id -u)" -eq 0 ] || die "Run it with sudo: sudo $0 $ROLE"
 command -v apt-get >/dev/null || die "This script is for Raspberry Pi OS (or another Debian-based system)."
 
@@ -59,6 +60,12 @@ say "Account: noor"
 if ! id noor >/dev/null 2>&1; then
   useradd --system --create-home --home-dir /var/lib/noor --shell /usr/sbin/nologin noor
   note "created the noor system account (no password, no login)"
+fi
+# Updates run Git and npm as the checkout's owner, never as root. A checkout made with sudo is
+# handed to the noor account; your own clone (e.g. /home/pi/noor-frame) stays yours.
+if [ "$(stat -c %U "$APP_DIR")" = root ]; then
+  chown -R noor:noor "$APP_DIR"
+  note "gave the root-owned checkout in $APP_DIR to the noor account"
 fi
 for g in video render input audio netdev; do
   if getent group "$g" >/dev/null; then usermod -aG "$g" noor; fi
@@ -146,7 +153,7 @@ if [ $WANT_FRAME = 1 ]; then
   install -d -m 755 /etc/noor-frame /usr/local/lib/noor-frame
   # Kiosk settings. An existing file keeps its setup-network password.
   python3 - "$SERVER_URL" "$HOTSPOT" <<'EOF'
-import json, os, secrets, sys
+import json, os, sys
 path = '/etc/noor-frame/kiosk.json'
 cfg = {}
 if os.path.exists(path):
@@ -159,7 +166,9 @@ cfg['autoHotspot'] = hotspot
 cfg.setdefault('wifiInterface', 'wlan0')
 h = cfg.setdefault('hotspot', {})
 h.setdefault('ssid', 'Noor Frame Setup')
-h.setdefault('password', ''.join(secrets.choice('abcdefghjkmnpqrstuvwxyz23456789') for _ in range(10)))
+# The helper creates and persists a per-device password under /var/lib/noor on first start.
+if h.get('password') == 'noorframe':
+    h.pop('password')
 with open(path, 'w') as f:
     json.dump(cfg, f, indent=2)
 os.chmod(path, 0o640)

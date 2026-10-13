@@ -1,6 +1,6 @@
 #!/bin/sh
 # Runs inside cage: optional screen rotation, then Chromium full screen on the kiosk helper.
-# Settings come from /etc/noor-frame/kiosk.env (NOOR_ROTATE=90|180|270, NOOR_URL).
+# Settings come from /etc/noor-frame/kiosk.env (NOOR_ROTATE=180, NOOR_URL).
 
 if [ -n "$NOOR_ROTATE" ] && command -v wlr-randr >/dev/null; then
   out=$(wlr-randr | awk '/^[^ ]/ {print $1; exit}')

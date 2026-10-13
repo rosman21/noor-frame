@@ -25,6 +25,7 @@ import ipaddress
 import json
 import os
 import re
+import secrets
 import shutil
 import subprocess
 import threading
@@ -58,7 +59,7 @@ def log(*args):
 
 def load_config():
     cfg = {'server': None, 'wifiInterface': 'wlan0', 'autoHotspot': True,
-           'hotspot': {'ssid': 'Noor Frame Setup', 'password': 'noorframe'}}
+           'hotspot': {'ssid': 'Noor Frame Setup'}}
     try:
         with open(CONFIG_FILE) as f:
             mine = json.load(f)
@@ -66,6 +67,7 @@ def load_config():
         cfg['hotspot'].update(mine.get('hotspot') or {})
     except FileNotFoundError:
         log('no', CONFIG_FILE, '- using defaults')
+    saved = {}
     try:
         with open(STATE_FILE) as f:
             saved = json.load(f)
@@ -73,6 +75,19 @@ def load_config():
             cfg['server'] = saved['server']
     except (OSError, ValueError):
         pass
+    password = cfg['hotspot'].get('password')
+    if password:
+        if saved.get('hotspotPassword') != password:
+            save_state(hotspotPassword=password)
+    else:
+        password = saved.get('hotspotPassword')
+        if not password:
+            alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+            password = ''.join(secrets.choice(alphabet) for _ in range(12))
+        if not save_state(hotspotPassword=password):
+            # Still start: the screen shows this password, it just changes after a restart.
+            log('could not save the setup-network password in', STATE_FILE)
+        cfg['hotspot']['password'] = password
     return cfg
 
 

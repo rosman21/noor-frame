@@ -10,6 +10,7 @@ import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 os.environ['NOOR_KIOSK_CONFIG'] = '/nonexistent/kiosk.json'
+os.environ['NOOR_KIOSK_STATE'] = os.path.join(tempfile.gettempdir(), 'noor-kiosk-test-state-%s.json' % os.getpid())
 import noor_kiosk as K  # noqa: E402
 
 
@@ -97,7 +98,7 @@ class Helper(unittest.TestCase):
         self.assertFalse(K.S.online)
         s = K.status()
         self.assertTrue(s['hotspot'])
-        self.assertEqual(s['hotspotPassword'], 'noorframe')
+        self.assertEqual(s['hotspotPassword'], K.CFG['hotspot']['password'])
 
     def test_join_wrong_password_reopens_setup(self):
         K.start_hotspot('test')
@@ -133,11 +134,56 @@ class Helper(unittest.TestCase):
 
     def test_server_address_set_on_the_screen_is_kept(self):
         with tempfile.TemporaryDirectory() as d:
+            state = K.STATE_FILE
             K.STATE_FILE = os.path.join(d, 'state.json')
-            self.assertFalse(K.set_server('not an address'))
-            self.assertTrue(K.set_server('192.168.1.20:8787'))
-            self.assertEqual(K.S.server, 'http://192.168.1.20:8787')
-            self.assertEqual(K.load_config()['server'], 'http://192.168.1.20:8787', 'kept after a restart')
+            try:
+                self.assertFalse(K.set_server('not an address'))
+                self.assertTrue(K.set_server('192.168.1.20:8787'))
+                self.assertEqual(K.S.server, 'http://192.168.1.20:8787')
+                self.assertEqual(K.load_config()['server'], 'http://192.168.1.20:8787', 'kept after a restart')
+            finally:
+                K.STATE_FILE = state
+
+    def test_setup_password_is_random_and_persisted_per_device(self):
+        with tempfile.TemporaryDirectory() as d:
+            config, state = K.CONFIG_FILE, K.STATE_FILE
+            K.CONFIG_FILE = os.path.join(d, 'missing-config.json')
+            K.STATE_FILE = os.path.join(d, 'kiosk-state.json')
+            try:
+                first = K.load_config()['hotspot']['password']
+                self.assertEqual(len(first), 12)
+                self.assertRegex(first, r'^[ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789]+$')
+                self.assertEqual(K.load_config()['hotspot']['password'], first)
+                with open(K.STATE_FILE) as f:
+                    self.assertEqual(json.load(f)['hotspotPassword'], first)
+            finally:
+                K.CONFIG_FILE, K.STATE_FILE = config, state
+
+    def test_setup_password_still_works_when_it_cant_be_saved(self):
+        with tempfile.TemporaryDirectory() as d:
+            config, state = K.CONFIG_FILE, K.STATE_FILE
+            K.CONFIG_FILE = os.path.join(d, 'missing-config.json')
+            blocker = os.path.join(d, 'not-a-folder')
+            open(blocker, 'w').close()
+            K.STATE_FILE = os.path.join(blocker, 'kiosk-state.json')
+            try:
+                self.assertEqual(len(K.load_config()['hotspot']['password']), 12)
+            finally:
+                K.CONFIG_FILE, K.STATE_FILE = config, state
+
+    def test_explicit_setup_password_is_preserved(self):
+        with tempfile.TemporaryDirectory() as d:
+            config, state = K.CONFIG_FILE, K.STATE_FILE
+            K.CONFIG_FILE = os.path.join(d, 'kiosk.json')
+            K.STATE_FILE = os.path.join(d, 'kiosk-state.json')
+            try:
+                with open(K.CONFIG_FILE, 'w') as f:
+                    json.dump({'hotspot': {'password': 'configured-pass'}}, f)
+                self.assertEqual(K.load_config()['hotspot']['password'], 'configured-pass')
+                with open(K.STATE_FILE) as f:
+                    self.assertEqual(json.load(f)['hotspotPassword'], 'configured-pass')
+            finally:
+                K.CONFIG_FILE, K.STATE_FILE = config, state
 
     def test_volume_with_alsa(self):
         calls = []
@@ -183,11 +229,12 @@ class Helper(unittest.TestCase):
             K.shutil.which = which
 
     def test_wifi_qr_escapes(self):
+        original = K.CFG['hotspot']
         K.CFG['hotspot'] = {'ssid': 'A;B', 'password': 'p:w'}
         try:
-            self.assertEqual(K.wifi_qr_text(), 'WIFI:T:WPA;S:A\;B;P:p\\:w;;')
+            self.assertEqual(K.wifi_qr_text(), r'WIFI:T:WPA;S:A\;B;P:p\:w;;')
         finally:
-            K.CFG['hotspot'] = {'ssid': 'Noor Frame Setup', 'password': 'noorframe'}
+            K.CFG['hotspot'] = original
 
     def test_discovery(self):
         K.run = lambda *c, timeout=0: (True, '+;wlan0;IPv4;noor-frame on pi;_noor-frame._tcp;local\n'
