@@ -28,6 +28,27 @@ them.
 > Android frames still need hands-on setup; see
 > [Noor on an Android photo frame](docs/android-frame.md).
 
+![Noor on a 10-inch Android photo frame, in the dark theme at night](docs/images/frame.jpg)
+
+## What it looks like
+
+![The dashboard: clock, weather, next prayer, the next event with travel time, the ayah of the day, everyone's day and today's prayers](docs/images/home-light.png)
+
+| | |
+| --- | --- |
+| ![The dashboard in the dark theme](docs/images/home-dark.png) | ![Prayer times, with the athan for each prayer](docs/images/prayer.png) |
+| ![The day's calendar, with when to leave for each trip](docs/images/calendar.png) | ![The dashboard on a living-room TV, mirrored from a Mac](docs/images/tv.jpg) |
+
+<img src="docs/images/companion.png" width="260" align="right" alt="The phone companion: household settings and calendars">
+
+**On your phone**, the companion changes household settings, adds calendars and approves
+screens. Scan the code under **Settings → Open on phone** on any screen.
+
+The screenshots use demo calendars and Toronto. The photos show the tested AEEZO frame and a TV
+showing the dashboard over screen mirroring, with its calendar details blurred.
+
+<br clear="right">
+
 ## How it fits together
 
 ```
@@ -143,7 +164,7 @@ athan) and **M** for the menu.
 
 | Screen | Guide |
 | --- | --- |
-| Raspberry Pi (server, screen, or both) | [docs/pi-server.md](docs/pi-server.md): `sudo /opt/noor-frame/apps/kiosk-pi/install.sh both`. A screen Pi with no Wi-Fi starts a **Noor Frame Setup** network and shows a QR code; join it from your phone and pick your home Wi-Fi. Covered by automated tests, but not yet tried on real Pi hardware; reports welcome. |
+| Raspberry Pi (server, screen, or both) | [docs/pi-server.md](docs/pi-server.md): `sudo /opt/noor-frame/apps/kiosk-pi/install.sh both`. A screen Pi with no Wi-Fi starts a **Noor Frame Setup** network and shows a QR code; join it from your phone and pick your home Wi-Fi. We're testing it on a Raspberry Pi now and will report back here. Until then it's covered by automated tests and a Debian container only, so treat it as untested on real hardware. |
 | Android photo frame | **Bought a frame? Start at [Wes Bos's photo-frame-dashboard](https://github.com/wesbos/photo-frame-dashboard#which-frame-do-you-have).** Identify your frame there and follow his guide for it until you have ADB. Then come back to [docs/android-frame.md](docs/android-frame.md) to install Noor. |
 | TV or any browser | Open the server's address, for example `http://noor.local:8787`. See below. |
 | Cloudflare (server only) | [docs/configuration.md](docs/configuration.md#hosting-on-cloudflare-optional). |

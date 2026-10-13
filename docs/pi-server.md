@@ -1,5 +1,10 @@
 # noor-frame on a Raspberry Pi
 
+> **Testing in progress.** We're testing this guide on a real Raspberry Pi now and will report
+> back here with what worked. Until then, the installer and the screen's helper are covered by
+> automated tests and a Debian container, but not yet by real Pi hardware. If you try it first,
+> please [open an issue](https://github.com/rosman21/noor-frame/issues) with what happened.
+
 A Raspberry Pi can run noor-frame in three ways:
 
 | Role | What it does | Needs a screen |

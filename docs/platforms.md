@@ -43,9 +43,9 @@ See `androidBridge` and `piBridge` at the top of the page's script for the two v
 ## What each platform does today
 
 Noor supports three kinds of screen: the **Android photo frame**, the **Raspberry Pi** and
-**any modern browser** (including a TV's own browser). The Pi setup is covered by automated
-tests and a Debian container, but hasn't been tried on real Pi hardware yet; reports are
-welcome.
+**any modern browser** (including a TV's own browser). **The Raspberry Pi:** we're testing it on a
+real Pi now and will report back here. Until then the Pi setup is covered by automated tests and
+a Debian container only.
 
 | | Android frame | Raspberry Pi | Browser / TV |
 | --- | --- | --- | --- |
