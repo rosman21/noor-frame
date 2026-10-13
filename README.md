@@ -11,6 +11,12 @@ It runs on a cheap Android photo frame, a Raspberry Pi screen, or any TV or
 browser. AI features are optional, so households that don't want them never see
 them.
 
+> **Inspired by [Wes Bos](https://github.com/wesbos)'s
+> [photo-frame-dashboard](https://github.com/wesbos/photo-frame-dashboard).**
+> His family dashboard on a cheap photo frame started this project, and his
+> PF1007L research is the foundation of the Android frame guides here. See
+> [Credits](#credits-and-inspiration).
+
 > **Status:** early, but in daily use. Most parts work:
 >
 > - the server and integrations;

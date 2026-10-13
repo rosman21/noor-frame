@@ -1,5 +1,11 @@
 # Noor on a cheap Android photo frame
 
+> This route stands on **[Wes Bos](https://github.com/wesbos)'s
+> [photo-frame-dashboard](https://github.com/wesbos/photo-frame-dashboard)**:
+> his write-up and hardware notes for the AEEZO PF1007L showed these frames can
+> become dashboards, and his findings about the stock AiMOR app are why we
+> disable it. Thank you, Wes.
+
 Wall-mounted Android photo frames are cheap, have good screens and draw little
 power. They're also locked down, run old Android, and ship with vendor software
 you may not want on your network. This page is the map. Two detailed guides do

@@ -1,5 +1,8 @@
 # kiosk-android: Noor on an Android photo frame
 
+> The idea and the PF1007L groundwork come from **[Wes Bos](https://github.com/wesbos)'s**
+> [photo-frame-dashboard](https://github.com/wesbos/photo-frame-dashboard). Thank you, Wes.
+
 **Noor Frame** is a tiny Android Home app: the dashboard in a fullscreen WebView.
 It's built without Gradle, with one Java file and one HTML page. It was tested on
 the AEEZO PF1007L (Allwinner A33, Android 6.0.1). It should suit other Android 6+

@@ -1,5 +1,9 @@
 # AEEZO PF1007L: FEL access, eMMC backup and root ADB
 
+> Built on **[Wes Bos](https://github.com/wesbos)'s** research in
+> [photo-frame-dashboard](https://github.com/wesbos/photo-frame-dashboard),
+> especially his [PF1007L guide](https://github.com/wesbos/photo-frame-dashboard/blob/main/docs/allwinner-a33-pf1007l.md).
+
 > **Read this first.** These steps can leave a frame unbootable if you skip a
 > check. They were tested on **one** unit. Boards sold under the same name
 > differ, so measure your own frame and never reuse another unit's offsets or
