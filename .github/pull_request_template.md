@@ -6,6 +6,8 @@
 
 - [ ] `npm test`
 - [ ] `npm run build`
+- [ ] `npm run test:e2e` (if companion, server, or browser behavior changed)
+- [ ] Pi helper, A33 tooling and shell syntax checks (if those areas changed; commands in CONTRIBUTING)
 - [ ] Tried it on a screen (which one?), or explained why not
 - [ ] Docs updated if behaviour or setup changed
 

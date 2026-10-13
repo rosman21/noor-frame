@@ -39,6 +39,7 @@ and `apps/frame/src/device.js`.
 | `openDashboard()` | Loads the saved server address. |
 | `serverUrl()` / `setServerUrl(url)` | Reads or changes the saved address. |
 | `status()` / `scan()` / `networks()` / `connect(ssid, password, security)` | Wi-Fi state, scanning and joining. These are used by the Wi-Fi page. |
+| `setupReason()` | Returns `offline` when the dashboard could not load, or `settings` when Wi-Fi setup was opened from the dashboard. The setup page uses this to explain why it opened. |
 | `volume()` / `setVolume(level)` | Media volume as `{"level", "max"}`. Changing it never shows Android's volume panel. |
 
 Wi-Fi limits: WPA/WPA2 personal and open networks work. WEP and enterprise
@@ -53,7 +54,10 @@ creates one if needed. The SDK usually lives in `~/Library/Android/sdk` on macOS
 and `~/Android/Sdk` on Linux.
 
 ```sh
-export ANDROID_HOME="$HOME/Library/Android/sdk"         # your SDK root
+# macOS:
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+# Linux instead:
+# export ANDROID_HOME="$HOME/Android/Sdk"
 export JAVA_HOME=/path/to/jdk-17   # macOS + Homebrew: /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
 export ADB="$ANDROID_HOME/platform-tools/adb"
 bash apps/kiosk-android/build.sh                         # → apps/kiosk-android/build/noor-frame.apk

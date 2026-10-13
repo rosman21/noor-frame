@@ -134,8 +134,8 @@ Optional. On by default.
 | --- | --- | --- |
 | `home` | (your city) | Where trips start. |
 | `mode` | `driving` | `driving`, `walking`, `transit` or `bicycling`. Transit and bike need a Google key. |
-| `googleMapsApiKey` | (none) | Adds live traffic. Needs the Routes API turned on in Google Cloud. Better saved from the companion, where it's encrypted. |
-| `googleDailyLimit` | `100` | Most Google lookups per day (0 to 5000). After that, trips use free estimates until midnight, and screens say why. Google bills each lookup to the key's account. |
+| `googleMapsApiKey` | (none) | Adds live traffic, address validation and address suggestions. Enable Routes API, Address Validation API and Places API (New) in Google Cloud. Better saved from the companion, where it's encrypted. See the [Google Maps setup and cost guide](google-maps.md). |
+| `googleDailyLimit` | `100` | Maximum outgoing Google Maps requests counted per household day (0 to 5000), shared by routes, home-address validation and Places autocomplete. After that, trips use free estimates until midnight, and screens say why. |
 | `lookaheadHours` | `36` | How far ahead to look up trips (1 to 168). |
 | `waitMs` | `4000` | How long the calendar waits for slow lookups before answering (0 to 20000). The rest finish in the background. |
 
@@ -185,6 +185,10 @@ Calendars listed here appear on every screen, alongside any added from a phone.
 | `family` | `true` for the shared family calendar. |
 | `url` | An iCal/ICS link (Apple, Google or Outlook share links work), or a built-in demo. |
 
+ICS feeds are limited to 10 MB per download. The server expands at most 50,000 recurrence
+iterations and keeps at most 5,000 events per feed, so an unusually large calendar cannot use
+unbounded memory or processing time.
+
 The demos `demo:family`, `demo:me`, `demo:spouse` and `demo:kid` generate sample events
 around today, so you can try everything without real calendars. Calendar links are private:
 anyone with one can read the calendar. They stay on the server.
@@ -221,9 +225,9 @@ All optional. Set them before `npm start`, or on a Raspberry Pi in `/etc/noor-fr
 | `NOOR_HOME` | the repo root | The folder holding `frame.config.json` and `data/`. The Pi installer uses `/var/lib/noor-frame`. |
 | `FRAME_SECRET` | `data/secret.key` | The key for encrypting saved API keys. If set, `secret.key` isn't used or created. Keep it the same, or saved keys stop working. |
 | `STATIC_DIR` | `apps/frame/dist` | The built dashboard to serve. |
-| `NOOR_PUBLIC_URL` | `http://<this computer's IP>:PORT` | The address phones should use, for QR codes. Set it if the automatic one is wrong, for example `http://noor.local:8787`. |
+| `NOOR_PUBLIC_URL` | `http://<this computer's IP>:PORT` | Node.js home server only (including the Pi install): the address phones should use in QR codes. Set it if the automatic one is wrong, for example `http://noor.local:8787`. Cloudflare Workers do not read this variable. |
 | `NOOR_AUTO_APPROVE` | on | Set to `0` to stop approving new screens automatically. |
-| `NOOR_TRUST_PROXY` | none | Behind your own proxy on the same computer: `cloudflare` or `1`. See below. |
+| `NOOR_TRUST_PROXY` | none | Node.js only. Behind your own trusted proxy on the same computer: `cloudflare` or `1`. See below. |
 | `NOOR_SETUP_CODE` | none | A secret of 12 or more characters. Opening the dashboard once with `?setup=<code>` approves that screen. Use it with `NOOR_AUTO_APPROVE=0`. |
 
 ## Screens and phones
@@ -231,8 +235,9 @@ All optional. Set them before `npm start`, or on a Raspberry Pi in `/etc/noor-fr
 Reading the dashboard needs no key. Changing anything needs an **approved device**:
 
 - Each screen gets its own key the first time it connects (`POST /api/devices/register`).
-- A screen connecting from a private address (your home network: `192.168.x.x`, `10.x.x.x`,
-  `172.16–31.x.x`, or this computer) is approved automatically.
+- On the Node.js home server, a screen connecting from a private address (your home network:
+  `192.168.x.x`, `10.x.x.x`, `172.16–31.x.x`, or this computer) is approved automatically.
+  Cloudflare Workers do not auto-approve screens; use `FRAME_SETUP_CODE` for first registration.
 - Anything else waits for approval. Approve it in the companion app, under screens.
 - A phone that scans a screen's QR code (Settings → Open on phone) gets its own approved key.
   The code lasts 15 minutes.
@@ -254,6 +259,18 @@ http://<server>:8787/?setup=<your code>
 The screen sends the code when it registers and removes it from the address straight away.
 From that screen, use **Settings → Open on phone** to approve your phone, and approve other
 screens from there. A code shorter than 12 characters is ignored.
+
+### If you are locked out
+
+If no approved screen or phone can open household settings, use the server's setup code to
+approve a screen again. On a Node.js home server, set `NOOR_SETUP_CODE` to a private value at
+least 12 characters long in the server environment (on the Pi, edit
+`/etc/noor-frame/server.env`), then restart the server. Open the dashboard on the screen with
+`/?setup=<your code>` appended to its address. For Cloudflare Workers, set the `FRAME_SETUP_CODE`
+secret and open `https://<your-worker>/?setup=<your code>`. Keep the code private and remove it
+from any saved links after registration. Once a screen is approved, use **Settings → Open on
+phone** to pair a phone. Registration is limited to 10 attempts per address and 60 attempts
+total in each 10-minute window; if you hit that limit, wait a few minutes before retrying.
 
 ## Hosting on Cloudflare (optional)
 

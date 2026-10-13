@@ -19,7 +19,7 @@ support for more frames are all welcome.
 
 ## Set up
 
-You need Node 22 or newer and Python 3 (for the Pi and frame tooling tests).
+You need Node 22 or newer and Python 3 (for Pi/frame tooling tests and the end-to-end suite).
 
 ```sh
 git clone https://github.com/rosman21/noor-frame
@@ -55,6 +55,11 @@ npm run test:a33       # A33 frame backup and boot-patch tooling, on fake disks
 npm run build          # the dashboard and companion must build
 npm run test:e2e       # the phone companion in real browsers (after npm run build)
 ```
+
+CI runs the Node tests and build on Node 22 and 24, Python helper and frame-tool tests on
+Python 3.12, shell syntax checks, and browser tests on Node 22. The end-to-end suite needs
+Playwright's Chromium and WebKit browsers. Install them once with
+`npx playwright install chromium webkit`; in CI they are installed with system dependencies.
 
 The browser tests drive the phone companion the way a person would, as an iPhone
 (WebKit) and an Android phone (Chromium). They cover scanning a screen's code,
@@ -129,6 +134,21 @@ a pull request that weakens a safety check needs a very good reason.
 3. Run `npm test` and `npm run build` before pushing. CI runs them too.
 4. Describe what changed and how you checked it. For UI changes, add a
    screenshot.
+
+CI also runs the Python and shell checks listed above. Before opening a pull request, run:
+
+```sh
+python3 -m unittest discover -s apps/kiosk-pi/helper -q
+python3 -m unittest discover -s scripts/a33-frame -q
+bash -n apps/kiosk-pi/install.sh apps/kiosk-pi/bin/noor-browser apps/kiosk-pi/bin/noor-frame-update apps/kiosk-android/build.sh scripts/a33-frame/build-uboot.sh scripts/a33-frame/load-readonly-uboot.sh
+```
+
+## Releasing
+
+For a release, update the package versions that ship, add a dated entry to
+`CHANGELOG.md`, and commit those changes. Tag the release as `vX.Y.Z`, push the tag, and
+create a GitHub release using the matching changelog entry. Include security researcher
+credits only with their consent.
 
 By contributing, you agree that your contribution is licensed under the
 [MIT License](LICENSE).

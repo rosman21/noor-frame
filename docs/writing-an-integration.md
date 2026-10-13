@@ -88,6 +88,13 @@ routes: {
   people can understand.
 - Exact paths win over prefix matches.
 
+`check: { label, path }` adds a **Check** button to the integration's companion settings page
+while that integration is enabled. The path must be one of the integration's declared routes,
+and the route must accept `POST`. Return `{ items: [...] }`; each item has `ok` (`true` for
+success, `false` for a problem, `null` for a warning), `title`, and optional `detail` and
+`fix: { key, value, label }`. The companion displays the results and applies a suggested fix
+to that setting when the user taps it.
+
 ### Hooks
 
 A hook lets one integration work on another's data without either importing the other. The
@@ -164,6 +171,11 @@ don't write any companion code:
 - `secret` shows "Saved · ends in 1234", with a field to paste a replacement. The key itself is
   never shown.
 - `advanced` settings go under **Advanced**.
+- A string setting with `autocomplete: '/api/path'` asks that POST route for suggestions as the
+  user types. After a 350 ms pause and once at least four characters are entered, the companion
+  sends `{ input, session }`; return `{ suggestions: [text], note? }`. A `note` is shown instead of
+  suggestions and disables further requests for that field visit. Use the session value to group
+  related requests if the outside service supports it.
 - Optional integrations get an on/off switch at the top.
 
 Saving posts to `POST /api/settings` with `{ integration: '<id>', values: { … } }`.

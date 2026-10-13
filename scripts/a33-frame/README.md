@@ -6,8 +6,9 @@
 > hashes. You do this at your own risk. The [overview](../../docs/android-frame.md)
 > explains the whole route and what each stage changes.
 
-Run every command from the **noor-frame repository root** (`pwd` should end in
-`/noor-frame`).
+Run every command from the **root of the noor-frame checkout**. Confirm it by
+running `test -f package.json && test -d scripts/a33-frame`; the directory name
+does not matter. Do not run these commands from a different project checkout.
 
 This guide records the route tested on one frame, including the paths that
 failed and the 12 MHz eMMC fix:
@@ -18,14 +19,18 @@ failed and the 12 MHz eMMC fix:
 3. **Install Noor.** The [Android kiosk guide](../../apps/kiosk-android/README.md)
    continues from there.
 
+The repository is MIT-licensed. The U-Boot patch in this directory is derived
+from U-Boot and carries its `GPL-2.0-or-later` terms; the added device-tree file
+inside the patch declares `(GPL-2.0+ OR MIT)` as permitted by its source header.
+
 ## Identify the hardware
 
 | Identifier | Tested unit |
 | --- | --- |
-| Seller / manufacturer / model | AEEZO 10.1-inch / YHK / PF1007L |
+| Seller / manufacturer / model | AEEZO 10.1-inch frame, manufactured by YHK; PF1007L hardware family |
 | Chipset | Allwinner A33 |
 | Android board ID | `astar_m86_8723cs` |
-| Stock app | AiMOR, `com.efercro.os.aimor` |
+| Shipped frame software | AiMOR, package `com.efercro.os.aimor` |
 | OS / RAM | Android 6.0.1 / 1 GB |
 | Display | 1280 × 800 IPS at 160 dpi |
 | Internal eMMC | 15,758,000,128 bytes, 30,777,344 sectors |
@@ -38,9 +43,10 @@ related board, but its unpublished reader is not needed for this workflow.
 
 ## Host and connection
 
-The working route was Mac mini → USB-C-to-USB-A dongle → known USB data cable →
-frame. The dongle was verified by mounting a USB thumb drive. FEL also worked
-through a CalDigit dock. Use stable power and a spare SD card; the tested card
+The working direct route was host USB-C → USB-C-to-USB-A adapter → known USB data
+cable → frame. The adapter was verified by mounting a USB thumb drive. FEL also
+worked through a CalDigit dock, but the direct connection was used for the
+successful backup. Use stable power and a spare SD card; the tested card
 was 128 GB. The host needs Git, Python 3, make, a C compiler, libusb/libfdt
 headers and Docker. On a Homebrew Mac, the host dependencies are:
 

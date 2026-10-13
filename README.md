@@ -51,8 +51,9 @@ them.
   Language, fonts, the clock, and each screen's theme, idle time and menu stay
   per screen.
 - **Only approved screens can change things.** Each screen gets its own key the
-  first time it connects. Screens on your home network are approved
-  automatically; anything else waits for approval in the companion app. To
+  first time it connects. On the Node.js home server, screens on your home
+  network are approved automatically; anything else waits for approval in the
+  companion app. To
   approve every screen by hand, set `NOOR_AUTO_APPROVE=0` with a
   [setup code](docs/configuration.md#screens-and-phones) for the first one.
 - **No keyboard on the frame.** Anything that needs real typing happens on your
@@ -119,7 +120,9 @@ Anthropic API key (console.anthropic.com → API keys).
 
 **Travel times:** events with a real place show how long the trip takes and when
 to leave. These are free estimates from OpenStreetMap. Add a Google Maps API key
-(Routes API) in the companion for live traffic, transit and cycling.
+in the companion for live traffic, transit and cycling. Noor uses the Routes,
+Address Validation and Places APIs; see the
+[Google Maps setup and cost guide](docs/google-maps.md).
 
 The dashboard is designed for a 1280×800 frame and scales to fit any other
 screen. On a 16:9 TV it widens instead of showing black bars. On a keyboard,
