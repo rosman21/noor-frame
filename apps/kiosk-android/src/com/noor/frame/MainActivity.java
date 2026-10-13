@@ -16,6 +16,7 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -28,7 +29,6 @@ import android.webkit.WebViewClient;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.net.URI;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -38,11 +38,18 @@ import org.json.JSONObject;
 // dead end. Wi-Fi is set up on Noor's own page instead (apps/kiosk-shared/setup.html, shared with
 // the Raspberry Pi and bundled as assets/setup.html), which opens from Settings → Wi-Fi and
 // whenever the server can't be reached, and goes back to the dashboard once the frame is online.
+//
+// The server's address is found on the network by itself (Server.Finder), typed on the Wi-Fi
+// page, or set over USB (SetServerActivity). Only pages from that server and the setup page are
+// ever shown, because both can use the Frame bridge (Wi-Fi, volume, server address).
 public class MainActivity extends Activity {
-  private static final String TAG = "NoorFrame";
-  private static final String DEFAULT_URL = "http://127.0.0.1:8787/";
+  static final String TAG = "NoorFrame";
+  static final String RELOAD = "com.noor.frame.RELOAD";
   private static final String SETUP_URL = "file:///android_asset/setup.html";
   private WebView web;
+  private Server.Finder finder;
+  private final Handler handler = new Handler();
+  private boolean onSetup;
   private WifiManager wifi;
   // The network that last rejected its password, so the setup page can say so.
   private volatile String authFailedSsid = "";
@@ -73,11 +80,21 @@ public class MainActivity extends Activity {
     settings.setDomStorageEnabled(true);
     settings.setUseWideViewPort(true);
     settings.setMediaPlaybackRequiresUserGesture(false);
+    finder = new Server.Finder(this, new Server.Finder.Listener() {
+      @Override public void changed() {
+        runOnUiThread(new Runnable() { @Override public void run() { maybeUseFound(); } });
+      }
+    });
     web.setWebViewClient(new WebViewClient() {
+      // Links and redirects stay on the Noor server; anything else isn't opened at all.
       @Override public boolean shouldOverrideUrlLoading(WebView view, String url) {
         if (isAllowedUrl(url)) return false;
-        Log.w(TAG, "Blocked navigation outside Noor's server or setup page");
+        Log.w(TAG, "Blocked a page outside the Noor server: " + Server.origin(url));
         return true;
+      }
+
+      @Override public void onPageFinished(WebView view, String url) {
+        if (Server.sameOrigin(url, serverUrl())) finder.stop();
       }
 
       // Called only for the main page, so a failed image or API call never lands here.
@@ -95,67 +112,68 @@ public class MainActivity extends Activity {
     });
     web.addJavascriptInterface(new FrameBridge(), "Frame");
     setContentView(web);
-    showDashboard(getIntent());
+    showDashboard();
   }
 
   @Override
   protected void onDestroy() {
+    finder.stop();
     unregisterReceiver(wifiEvents);
     super.onDestroy();
   }
 
-  private String serverUrl() {
-    return getPreferences(MODE_PRIVATE).getString("url", DEFAULT_URL);
-  }
+  private String serverUrl() { return Server.saved(this); }
 
   private boolean isAllowedUrl(String url) {
-    if (SETUP_URL.equals(url)) return true;
-    return sameOrigin(url, serverUrl());
+    return SETUP_URL.equals(url) || Server.sameOrigin(url, serverUrl());
   }
 
-  private static boolean sameOrigin(String first, String second) {
-    try {
-      URI a = new URI(first), b = new URI(second);
-      String aScheme = a.getScheme(), bScheme = b.getScheme();
-      if (aScheme == null || bScheme == null || a.getHost() == null || b.getHost() == null
-          || a.getUserInfo() != null || b.getUserInfo() != null) return false;
-      aScheme = aScheme.toLowerCase();
-      bScheme = bScheme.toLowerCase();
-      if (!("http".equals(aScheme) || "https".equals(aScheme))) return false;
-      int aPort = a.getPort() == -1 ? ("https".equals(aScheme) ? 443 : 80) : a.getPort();
-      int bPort = b.getPort() == -1 ? ("https".equals(bScheme) ? 443 : 80) : b.getPort();
-      return aScheme.equals(bScheme) && a.getHost().equalsIgnoreCase(b.getHost()) && aPort == bPort;
-    } catch (Exception e) {
-      return false;
-    }
+  // The saved server didn't answer (or none is saved yet) and the setup page is up. If exactly
+  // one Noor server announces itself, use it: it's this home's server, perhaps at a new address.
+  // With several, the setup page lists them to choose from. A short wait lets others answer too.
+  private void maybeUseFound() {
+    if (!onSetup || !"offline".equals(setupReason) || finder.only() == null) return;
+    handler.removeCallbacks(useFound);
+    handler.postDelayed(useFound, 3000);
   }
-
-  private void showDashboard(Intent intent) {
-    String url = intent == null ? null : intent.getDataString();
-    if (url != null && (url.startsWith("http://") || url.startsWith("https://"))) {
-      getPreferences(MODE_PRIVATE).edit().putString("url", url).apply();
-    } else {
-      url = serverUrl();
+  private final Runnable useFound = new Runnable() {
+    @Override public void run() {
+      String url = finder.only();
+      if (!onSetup || !"offline".equals(setupReason) || url == null) return;
+      Log.i(TAG, "Using the Noor server found on the network: " + url);
+      Server.save(MainActivity.this, url, false);
+      showDashboard();
     }
-    if (!sameOrigin(url, url)) {
+  };
+
+  // The dashboard from the saved server. With no server yet, the setup page looks for one.
+  private void showDashboard() {
+    String url = serverUrl();
+    if (Server.origin(url) == null) {
       showSetup("offline");
       return;
     }
+    onSetup = false;
     Log.i(TAG, "Loading " + url);
     web.loadUrl(url);
   }
 
   private void showSetup(String reason) {
     setupReason = reason;
+    onSetup = true;
+    finder.start();
     Log.i(TAG, "Showing Wi-Fi setup (" + reason + ")");
     web.loadUrl(SETUP_URL);
+    maybeUseFound();
   }
 
+  // Home pressed, or a new address set over USB: show the dashboard again. Addresses inside
+  // intents are never used here (see SetServerActivity).
   @Override
   protected void onNewIntent(Intent intent) {
     super.onNewIntent(intent);
     setIntent(intent);
-    showDashboard(intent);
+    showDashboard();
   }
 
   @Override
@@ -209,7 +227,7 @@ public class MainActivity extends Activity {
     @JavascriptInterface
     public void openDashboard() {
       runOnUiThread(new Runnable() {
-        @Override public void run() { showDashboard(null); }
+        @Override public void run() { showDashboard(); }
       });
     }
 
@@ -238,14 +256,16 @@ public class MainActivity extends Activity {
 
     @JavascriptInterface
     public boolean setServerUrl(String url) {
-      url = url == null ? "" : url.trim();
-      if (!url.startsWith("http://") && !url.startsWith("https://")) url = "http://" + url;
-      if (!sameOrigin(url, url) || !url.matches("https?://[^/\\s]+(/\\S*)?")) return false;
-      if (!url.substring(url.indexOf("//") + 2).contains("/")) url += "/";
-      getPreferences(MODE_PRIVATE).edit().putString("url", url).apply();
+      url = Server.normalize(url);
+      if (url == null) return false;
+      Server.save(MainActivity.this, url, true);
       Log.i(TAG, "Server address set to " + url);
       return true;
     }
+
+    // Noor servers announcing themselves on this network: [{"name", "url"}, …].
+    @JavascriptInterface
+    public String servers() { return finder.json(); }
 
     @JavascriptInterface
     public String status() {

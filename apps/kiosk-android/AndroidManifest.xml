@@ -20,6 +20,10 @@
         <category android:name="android.intent.category.HOME" />
         <category android:name="android.intent.category.DEFAULT" />
       </intent-filter>
+    </activity>
+    <!-- Sets the server's address over USB (adb). The permission keeps other apps out: the adb
+         shell holds it, ordinary apps can't. -->
+    <activity android:name=".SetServerActivity" android:exported="true" android:theme="@android:style/Theme.NoDisplay" android:permission="android.permission.WRITE_SECURE_SETTINGS">
       <intent-filter>
         <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />

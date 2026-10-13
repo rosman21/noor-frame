@@ -85,7 +85,8 @@ def load_config():
             alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
             password = ''.join(secrets.choice(alphabet) for _ in range(12))
         if not save_state(hotspotPassword=password):
-            raise RuntimeError('could not persist the setup-network password')
+            # Still start: the screen shows this password, it just changes after a restart.
+            log('could not save the setup-network password in', STATE_FILE)
         cfg['hotspot']['password'] = password
     return cfg
 

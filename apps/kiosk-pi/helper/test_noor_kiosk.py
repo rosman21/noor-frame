@@ -159,6 +159,18 @@ class Helper(unittest.TestCase):
             finally:
                 K.CONFIG_FILE, K.STATE_FILE = config, state
 
+    def test_setup_password_still_works_when_it_cant_be_saved(self):
+        with tempfile.TemporaryDirectory() as d:
+            config, state = K.CONFIG_FILE, K.STATE_FILE
+            K.CONFIG_FILE = os.path.join(d, 'missing-config.json')
+            blocker = os.path.join(d, 'not-a-folder')
+            open(blocker, 'w').close()
+            K.STATE_FILE = os.path.join(blocker, 'kiosk-state.json')
+            try:
+                self.assertEqual(len(K.load_config()['hotspot']['password']), 12)
+            finally:
+                K.CONFIG_FILE, K.STATE_FILE = config, state
+
     def test_explicit_setup_password_is_preserved(self):
         with tempfile.TemporaryDirectory() as d:
             config, state = K.CONFIG_FILE, K.STATE_FILE

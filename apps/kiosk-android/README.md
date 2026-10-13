@@ -25,7 +25,7 @@ This page starts from a frame with working root ADB.
 | --- | --- |
 | Dashboard | Loads the Noor server's address in a fullscreen, immersive WebView, always horizontal. Sound may play without a tap. The screen stays on. |
 | Home app | Declares the `HOME` category, so Android can boot straight into Noor. |
-| Server address | Saved from the first `VIEW` launch (`am start -a android.intent.action.VIEW -d http://…`) or set on the Wi-Fi page. |
+| Server address | Found on the network by itself (the server announces `_noor-frame._tcp`), chosen or typed on the Wi-Fi page, or set over USB with `SetServerActivity`. Other apps on the frame can't change it, and the app never shows pages from anywhere else. |
 | Wi-Fi setup | `../kiosk-shared/setup.html` (shared with the Raspberry Pi kiosk): Noor's own Wi-Fi page with an on-screen keyboard. It opens from **Settings → Wi-Fi**, and by itself whenever the server can't be reached. Android's own screens never appear. |
 | Recovery | When the dashboard fails to load, the Wi-Fi page shows why. It retries every 30 seconds once nobody is touching the screen, so the frame recovers by itself after a power cut. |
 | Volume | **Settings → Sound** sets Android's media volume, because the frame has no volume buttons. |
@@ -47,12 +47,14 @@ Wi-Fi limits: WPA/WPA2 personal and open networks work. WEP and enterprise
 ## Build
 
 You need the Android command-line tools with build-tools 34.0.0 and platform
-android-34, plus JDK 17. JDK 25 crashed the D8 dexer in testing. The script
-signs the APK with your debug key and creates one if needed.
+android-34, plus JDK 17 (11–21 work; newer ones make build-tools 34 crash, so
+the script stops and says so). The script signs the APK with your debug key and
+creates one if needed. The SDK usually lives in `~/Library/Android/sdk` on macOS
+and `~/Android/Sdk` on Linux.
 
 ```sh
 export ANDROID_HOME="$HOME/Library/Android/sdk"         # your SDK root
-export JAVA_HOME=/path/to/jdk-17
+export JAVA_HOME=/path/to/jdk-17   # macOS + Homebrew: /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
 export ADB="$ANDROID_HOME/platform-tools/adb"
 bash apps/kiosk-android/build.sh                         # → apps/kiosk-android/build/noor-frame.apk
 ```
@@ -69,13 +71,18 @@ root). Then:
 # Granting it now means Android's permission dialog never appears.
 "$ADB" shell pm grant com.noor.frame android.permission.ACCESS_COARSE_LOCATION
 "$ADB" reverse tcp:8787 tcp:8787
-"$ADB" shell 'am start -a android.intent.action.VIEW -d "http://127.0.0.1:8787/" -n com.noor.frame/.MainActivity'
+"$ADB" shell 'am start -a android.intent.action.VIEW -d "http://127.0.0.1:8787/" -n com.noor.frame/.SetServerActivity'
 "$ADB" logcat -d | grep NoorFrame | tail -30
 ```
 
 `127.0.0.1` reaches your computer only through `adb reverse`, which stops
-working when USB is unplugged or ADB restarts. For daily use, point the frame
-at the server's address on your Wi-Fi (see [Make Noor the Home app](#make-noor-the-home-app)).
+working when USB is unplugged or ADB restarts. For daily use the frame finds the
+server on your Wi-Fi by itself (see [Make Noor the Home app](#make-noor-the-home-app)).
+
+`SetServerActivity` is the only way to set the address from outside the frame,
+and only ADB can open it: it requires `WRITE_SECURE_SETTINGS`, which the ADB
+shell has and ordinary apps can't get. The main screen ignores addresses sent
+to it by other apps.
 
 If the screen stays blank, the WebView is too old. That's the next section.
 
@@ -223,13 +230,22 @@ computer on your Wi-Fi.
    your network. If the stock vendor app is still enabled, read
    [Disable the vendor apps](#disable-the-vendor-apps) first: on the tested
    firmware it shouldn't go online.
-2. **Set the server address.** Either:
-   - tap **Change** under **Noor server** on the same page, or
-   - over ADB:
+2. **Find the server.** Once the frame is on Wi-Fi, it looks for Noor servers
+   announcing themselves on the network. Every server does this (`dns-sd` on a
+   Mac, `avahi-publish` on Linux, Avahi on a Raspberry Pi set up with
+   `apps/kiosk-pi/install.sh`; `NOOR_ANNOUNCE=0` turns it off):
+   - **One server:** the frame uses it and opens the dashboard.
+   - **More than one:** the Wi-Fi page lists them under **Noor servers on this
+     network**. Tap yours.
+   - **None found** (a server on another network, or a computer without
+     `dns-sd`/`avahi-publish`): tap **Change** under **Noor server** and type
+     its address, or set it over ADB:
      ```sh
      "$ADB" reverse --remove-all
-     "$ADB" shell 'am start -a android.intent.action.VIEW -d "http://<server-address>:8787/" -n com.noor.frame/.MainActivity'
+     "$ADB" shell 'am start -a android.intent.action.VIEW -d "http://<server-address>:8787/" -n com.noor.frame/.SetServerActivity'
      ```
+   If the server later moves to a new address, the frame finds it again the
+   same way when the old address stops answering.
 3. **Choose Noor as Home.** Press Home and choose **Noor Frame → Always**:
    ```sh
    "$ADB" shell input keyevent KEYCODE_HOME
@@ -258,9 +274,10 @@ at a time and check that Noor is still showing after each:
 ```
 
 - **Leave everything else enabled.** Don't blanket-disable Android services,
-  Settings, Package Installer or WebView. The tested firmware also has an
-  unidentified `com.android.gl2jni` package at `/system/priv-app/tomas/`; it
-  was left enabled.
+  Settings, Package Installer or WebView.
+- **`com.android.gl2jni`** (in `/system/priv-app/tomas/` on the tested
+  firmware) is an old debuggable OpenGL demo app. It's safe to disable too,
+  or to leave alone.
 - **Undo:** disabling is reversible with `"$ADB" shell pm enable <package>`.
   It doesn't free `/system` space.
 - **No factory reset:** neither deleting vendor APKs nor a factory reset is
@@ -387,6 +404,8 @@ screen black for a few seconds; Android still starts.
 | Symptom | Check |
 | --- | --- |
 | Blank screen in the kiosk | WebView is too old: `dumpsys package com.android.webview | grep versionName`. |
+| Slow first minute after a reboot | On a 1 GB frame, Android's low-memory killer can restart Noor a few times while the system starts. Give it two minutes before calling it stuck. |
+| The frame doesn't find the server | The computer must be on the same Wi-Fi, running `npm start`, with `dns-sd` (macOS, Windows with Bonjour) or `avahi-publish` (Linux). Guest networks and some mesh routers block these announcements; type the address instead. |
 | Version 106 but WebView crashes | The native libraries are missing from `/system/app/webview/lib/arm`. Look for `dlopen failed` in logcat. |
 | "Noor can't reach its server" | The server is off, or its address changed. Tap **Change** under **Noor server**. The page retries by itself every 30 s. |
 | No networks listed | The location permission is missing: `pm grant com.noor.frame android.permission.ACCESS_COARSE_LOCATION`. |

@@ -53,6 +53,7 @@
   #phone { margin-top: 16px; }
   #server { display: flex; align-items: center; gap: 18px; min-height: 84px; padding: 0 22px; border-radius: 18px; background: var(--card); }
   #server .url { flex: 1; font-size: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #found { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   /* The password sheet sits at the top, so the on-screen keyboard never covers it. */
   #scrim { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; }
   #sheet { position: fixed; left: 50%; top: 24px; width: 760px; max-width: calc(100% - 32px); transform: translateX(-50%); padding: 28px 32px; border-radius: 24px; background: var(--card-hi); box-shadow: 0 20px 60px rgba(0,0,0,.5); display: none; }
@@ -86,6 +87,8 @@
 </header>
 
 <div id="notice"><div><p id="noticeText"></p><small id="noticeSub"></small></div><button class="btn solid" id="noticeBtn" hidden>Try again</button></div>
+
+<div id="foundBox" hidden><div class="label"><span>Noor servers on this network</span></div><div id="found"></div></div>
 
 <div class="label"><span>Networks</span><button id="rescan">Refresh</button></div>
 <div id="list"><div id="empty" class="serif">Looking for networks…</div></div>
@@ -124,6 +127,8 @@
       serverUrl: function () { return Promise.resolve(F.serverUrl()); },
       setServerUrl: function (url) { return Promise.resolve(F.setServerUrl(url)); },
       openDashboard: function () { F.openDashboard(); },
+      // Noor servers announcing themselves on the network (older apps don't look).
+      servers: F.servers ? function () { return json(F.servers()); } : null,
       phoneSetup: null,
     };
   }
@@ -142,6 +147,7 @@
       serverUrl: function () { return get('status').then(function (st) { return st.server || ''; }); },
       setServerUrl: function (url) { return post('server', { url: url }).then(function (r) { return !!r.ok; }); },
       openDashboard: function () { location.href = '/?kiosk=pi'; },
+      servers: null, // the helper finds the server on the network by itself
       // No keyboard handy (a TV): set up Wi-Fi from a phone through the Pi's own setup network.
       phoneSetup: function () { return post('hotspot', { on: true }).then(function () { location.href = '/kiosk/connecting'; }); },
     };
@@ -166,6 +172,11 @@
     var s = lastStatus;
     if (!s.connected) {
       notice('Connect to Wi-Fi to load Noor.', 'Choose your home network below.', 'bad');
+    } else if (!server && !$('foundBox').hidden) {
+      return; // refreshServers says what to do
+    } else if (!server) {
+      notice('Looking for the Noor server on this network…',
+        'Make sure the computer running Noor is on and on the same Wi-Fi (' + s.ssid + '), or type its address below.', 'bad');
     } else {
       notice('Noor can’t reach its server.',
         'On Wi-Fi (' + s.ssid + '), but nothing answered at ' + (server || 'the server') + '. Check the server is on, or change its address below.',
@@ -323,6 +334,40 @@
     el.appendChild(last);
   }
 
+  // Servers found on the network, other than the one already chosen. Tap one to use it.
+  var shownServers = '';
+  function refreshServers() {
+    if (!B.servers) return;
+    B.servers().then(function (list) {
+      var el = $('found'), others = list.filter(function (x) { return x.url !== server; });
+      // Rebuilt only when it changes, so a tap never lands on a button that is being replaced.
+      var key = JSON.stringify(others);
+      if (key === shownServers) return;
+      shownServers = key;
+      el.textContent = '';
+      $('foundBox').hidden = !others.length;
+      if (!server && others.length > 1 && reason === 'offline' && !sheet && !joining) {
+        notice('Choose your Noor server.', 'More than one is running on this network. Tap the one this frame should use.', 'good');
+      }
+      others.forEach(function (x) {
+        var b = document.createElement('button');
+        b.className = 'net';
+        b.innerHTML = '<span class="name"></span><span class="meta"></span>';
+        b.querySelector('.name').textContent = x.name;
+        b.querySelector('.meta').textContent = 'Use ' + x.url.replace(/^http:\/\//, '').replace(/\/$/, '');
+        b.onclick = function () {
+          B.setServerUrl(x.url).then(function (ok) {
+            if (!ok) return;
+            server = x.url; $('serverUrl').textContent = x.url;
+            notice('Opening Noor…', x.url, 'good');
+            B.openDashboard();
+          });
+        };
+        el.appendChild(b);
+      });
+    }, function () {});
+  }
+
   function refreshList() {
     B.networks().then(render, function () { /* keep the last list */ });
   }
@@ -337,7 +382,7 @@
     else if (!s.wifiOn) st.textContent = 'Wi-Fi is off. Choose a network to turn it on.';
     else st.textContent = s.connecting ? 'Connecting…' : 'Not connected';
     if (s.connected) st.querySelector('b').textContent = s.ssid;
-    $('back').hidden = !s.connected;
+    $('back').hidden = !s.connected || !server;
 
     if (joining) {
       var j = joining;
@@ -363,13 +408,15 @@
     }
   }
 
-  B.serverUrl().then(function (url) { server = url; $('serverUrl').textContent = url; });
+  B.serverUrl().then(function (url) { server = url; $('serverUrl').textContent = url || 'Not set yet'; });
   tick();
   if (reason === 'offline') { showOffline(); window.lastTry = Date.now(); }
   B.scan();
   refreshList();
   setInterval(tick, 1500);
   setInterval(refreshList, 5000);
+  refreshServers();
+  setInterval(refreshServers, 3000);
   setInterval(function () { if (!sheet && !joining) B.scan(); }, 20000);
 </script>
 </body>

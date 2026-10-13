@@ -61,8 +61,12 @@ if ! id noor >/dev/null 2>&1; then
   useradd --system --create-home --home-dir /var/lib/noor --shell /usr/sbin/nologin noor
   note "created the noor system account (no password, no login)"
 fi
-# Git and npm updates run as the checkout owner, so the unprivileged service user must own it.
-chown -R noor:noor "$APP_DIR"
+# Updates run Git and npm as the checkout's owner, never as root. A checkout made with sudo is
+# handed to the noor account; your own clone (e.g. /home/pi/noor-frame) stays yours.
+if [ "$(stat -c %U "$APP_DIR")" = root ]; then
+  chown -R noor:noor "$APP_DIR"
+  note "gave the root-owned checkout in $APP_DIR to the noor account"
+fi
 for g in video render input audio netdev; do
   if getent group "$g" >/dev/null; then usermod -aG "$g" noor; fi
 done
