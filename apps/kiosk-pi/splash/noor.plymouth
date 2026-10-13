@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Noor Frame
+Description=Noor Frame's boot splash: نور (light) on green, from apps/kiosk-android/bootanimation
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/noor
+ScriptFile=/usr/share/plymouth/themes/noor/noor.script

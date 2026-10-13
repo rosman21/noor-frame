@@ -1,0 +1,3 @@
+# /etc/udev/rules.d/90-noor-backlight.rules
+# Lets the video group (the noor user) switch a display backlight off at night.
+SUBSYSTEM=="backlight", RUN+="/bin/chgrp video /sys%p/bl_power /sys%p/brightness", RUN+="/bin/chmod g+w /sys%p/bl_power /sys%p/brightness"

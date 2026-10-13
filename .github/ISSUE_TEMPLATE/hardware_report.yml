@@ -1,0 +1,36 @@
+name: Hardware report
+description: Tried noor-frame on a frame, board or screen? Tell us how it went, even if it didn't work.
+labels: [hardware]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Reports from other frames help everyone. **Never attach eMMC backups, serial numbers or Wi-Fi details.**
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      description: Seller, model and where you bought it (e.g. AEEZO 10.1" PF1007L, Amazon).
+    validations:
+      required: true
+  - type: textarea
+    id: identity
+    attributes:
+      label: Identifiers
+      description: SoC, board ID (`getprop ro.product.board` or the boot log), Android version, RAM, storage size, display resolution, stock app.
+  - type: textarea
+    id: tried
+    attributes:
+      label: What you tried and what each step printed
+      description: For example FEL detection, the backup, ADB, the WebView version, whether the dashboard rendered.
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result
+      options:
+        - Noor runs as the Home app
+        - Noor runs, with problems
+        - Got ADB, Noor not working yet
+        - Couldn't get access

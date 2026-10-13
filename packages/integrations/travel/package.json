@@ -1,0 +1,13 @@
+{
+  "name": "@noor-frame/travel",
+  "version": "0.1.0",
+  "description": "Travel times to calendar events (OSRM estimate or Google Routes).",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "@noor-frame/core": "*"
+  }
+}

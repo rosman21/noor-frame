@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Set up Wi-Fi · noor-frame</title>
+<!-- The phone page on the frame's setup network. No internet here, so everything is inline. -->
+<style>
+  :root { --paper: #F2EEE6; --card: #FBF9F4; --ink: #111111; --mute: #7A756B; --line: #D6CFC0; --green: #0B7A5B; --alert: #E5261E; }
+  @media (prefers-color-scheme: dark) { :root { --paper: #141311; --card: #1E1C19; --ink: #EEE9DF; --mute: #9C968A; --line: #3A3631; --green: #2FB487; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 22px 16px 40px; background: var(--paper); color: var(--ink); font: 17px/1.45 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+  main { max-width: 480px; margin: 0 auto; }
+  .label { color: var(--mute); font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+  h1 { margin: 4px 0 14px; font: 400 36px/1.1 Georgia, 'Times New Roman', serif; }
+  .list { margin: 16px 0; background: var(--card); border-radius: 14px; overflow: hidden; }
+  .net { display: flex; width: 100%; align-items: center; gap: 12px; padding: 15px 16px; border: 0; border-bottom: 1px solid var(--line);
+    background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .net:last-child { border-bottom: 0; }
+  .net b { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+  .net small { color: var(--mute); }
+  .net.is-on { background: rgba(11, 122, 91, .12); }
+  .bars { display: inline-flex; gap: 2px; align-items: flex-end; height: 16px; }
+  .bars i { width: 4px; background: var(--line); border-radius: 1px; }
+  .bars i.on { background: var(--ink); }
+  label { display: block; margin: 14px 0 6px; font-weight: 700; }
+  input { width: 100%; height: 52px; padding: 0 14px; border: 2px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink); font: inherit; }
+  input:focus { outline: none; border-color: var(--green); }
+  .show { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-weight: 400; }
+  .show input { width: 20px; height: 20px; }
+  button.go { width: 100%; height: 56px; margin-top: 20px; border: 0; border-radius: 999px; background: var(--ink); color: var(--paper);
+    font: 800 16px system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+  .msg { margin: 14px 0; padding: 12px 14px; border-left: 4px solid var(--alert); background: var(--card); border-radius: 8px; }
+  .muted { color: var(--mute); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <div class="label">noor-frame</div>
+  <h1>Choose your home Wi-Fi</h1>
+  <div class="msg" id="msg" hidden></div>
+  <div class="list" id="list"><div class="net"><b class="muted">Looking for networks…</b></div></div>
+  <form id="form">
+    <label for="ssid">Network name</label>
+    <input id="ssid" name="ssid" autocomplete="off" autocapitalize="off" spellcheck="false" required maxlength="32" placeholder="Pick one above, or type a hidden network">
+    <label for="pw">Password</label>
+    <input id="pw" name="password" type="password" autocomplete="off" maxlength="63" placeholder="Leave empty for an open network">
+    <label class="show"><input type="checkbox" id="showpw">Show password</label>
+    <button class="go" type="submit">Connect the frame</button>
+  </form>
+  <div id="done" hidden>
+    <h1 id="doneTitle"></h1>
+    <p>Your phone will leave the setup network now. Watch the frame’s screen: the dashboard appears once it’s connected.</p>
+    <p class="muted">If it can’t connect, the setup network comes back within a minute. Join it again to retry.</p>
+  </div>
+</main>
+<script>
+  var list = document.getElementById('list'), form = document.getElementById('form');
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function bars(sig) { var n = sig > 70 ? 4 : sig > 50 ? 3 : sig > 30 ? 2 : 1, h = ''; for (var i = 1; i <= 4; i++) h += '<i class="' + (i <= n ? 'on' : '') + '" style="height:' + (i * 4) + 'px"></i>'; return '<span class="bars">' + h + '</span>'; }
+
+  fetch('/networks').then(function (r) { return r.json(); }).then(function (d) {
+    if (d.message) { var m = document.getElementById('msg'); m.textContent = d.message; m.hidden = false; }
+    list.innerHTML = d.networks.length ? d.networks.map(function (n) {
+      return '<button type="button" class="net" data-ssid="' + esc(n.ssid) + '"><b>' + esc(n.ssid) + '</b><small>' + (n.secure ? 'Secured' : 'Open') + '</small>' + bars(n.signal) + '</button>';
+    }).join('') : '<div class="net"><b class="muted">No networks found. Type the name below.</b></div>';
+  });
+
+  list.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-ssid]');
+    if (!b) return;
+    [].forEach.call(list.children, function (x) { x.classList.toggle('is-on', x === b); });
+    form.ssid.value = b.dataset.ssid;
+    form.password.focus();
+  });
+  document.getElementById('showpw').addEventListener('change', function (e) { form.password.type = e.target.checked ? 'text' : 'password'; });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var ssid = form.ssid.value.trim(), pw = form.password.value;
+    if (pw && pw.length < 8) { alert('Wi-Fi passwords are at least 8 characters.'); return; }
+    form.querySelector('button').disabled = true;
+    fetch('/join', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ssid: ssid, password: pw }) })
+      .then(function (r) { return r.json().then(function (b) { if (!r.ok) throw new Error(b.error); }); })
+      .then(function () {
+        form.hidden = true; list.hidden = true; document.getElementById('msg').hidden = true;
+        document.getElementById('doneTitle').textContent = 'Joining “' + ssid + '”…';
+        document.getElementById('done').hidden = false;
+      })
+      .catch(function (err) { alert(err.message); form.querySelector('button').disabled = false; });
+  });
+</script>
+</body>
+</html>

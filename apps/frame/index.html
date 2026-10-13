@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!-- Laid out for a 1280×800 frame; other screens scale the stage to fit. -->
+  <meta name="viewport" content="width=1280, initial-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#F2EEE6">
+  <title>noor-frame</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Instrument+Serif:ital@0;1&family=Amiri:wght@400;700&family=Amiri+Quran&display=swap">
+  <link rel="stylesheet" href="/styles/tokens.css">
+  <link rel="stylesheet" href="/styles/base.css">
+  <link rel="stylesheet" href="/styles/views/home.css">
+  <link rel="stylesheet" href="/styles/views/calendar.css">
+  <link rel="stylesheet" href="/styles/views/prayer.css">
+  <link rel="stylesheet" href="/styles/views/settings.css">
+  <link rel="stylesheet" href="/styles/views/ambient.css">
+</head>
+<body>
+  <div class="stage" id="stage" data-mode="day">
+
+    <main class="views">
+      <section class="view" id="view-home" data-view="home"></section>
+      <section class="view" id="view-calendar" data-view="calendar"></section>
+      <section class="view" id="view-prayer" data-view="prayer"></section>
+      <section class="view" id="view-settings" data-view="settings"></section>
+      <div class="banners" id="banners"></div>
+    </main>
+
+    <!-- Side dock, for Settings → Menu: left or right. -->
+    <nav class="dock" id="dock" aria-label="Screens">
+      <button class="dock-item" data-go="home"><i data-icon="home" data-size="26"></i><span data-i18n="Today">Today</span></button>
+      <button class="dock-item" data-go="calendar"><i data-icon="calendar" data-size="26"></i><span data-i18n="Calendar">Calendar</span></button>
+      <button class="dock-item" data-go="prayer"><i data-icon="moonstar" data-size="26"></i><span data-i18n="Prayer">Prayer</span></button>
+      <button class="dock-item" data-go="settings"><i data-icon="settings" data-size="26"></i><span data-i18n="Settings">Settings</span></button>
+      <div class="theme-tog theme-tog--dock" id="dockTheme"></div>
+      <button class="dock-net" id="dockNet" aria-label="Connection status"></button>
+      <button class="dock-clock" id="dockClock" aria-label="Clock. Press and hold for test controls"></button>
+    </nav>
+
+    <!-- Pull-out menu, for Settings → Menu: top or bottom. Drag from that edge, or tap the handle. -->
+    <div class="shade-grab" id="shadeGrab" role="button" aria-label="Menu"><i class="shade-pill"></i><span class="shade-warn" id="shadeWarn"></span></div>
+    <div class="shade" id="shade">
+      <div class="shade-scrim" id="shadeScrim"></div>
+      <div class="shade-panel" id="shadePanel">
+        <div class="shade-top">
+          <button class="shade-clock" id="shadeClock" aria-label="Clock. Press and hold for test controls"></button>
+          <div class="shade-info" id="shadeInfo"></div>
+          <div class="theme-tog" id="shadeTheme"></div>
+          <button class="shade-net" id="shadeNet" aria-label="Connection status"></button>
+        </div>
+        <nav class="shade-nav" id="shadeNav" aria-label="Screens">
+          <button class="shade-tile" data-go="home"><i data-icon="home" data-size="40"></i><span data-i18n="Today">Today</span></button>
+          <button class="shade-tile" data-go="calendar"><i data-icon="calendar" data-size="40"></i><span data-i18n="Calendar">Calendar</span></button>
+          <button class="shade-tile" data-go="prayer"><i data-icon="moonstar" data-size="40"></i><span data-i18n="Prayer">Prayer</span></button>
+          <button class="shade-tile" data-go="settings"><i data-icon="settings" data-size="40"></i><span data-i18n="Settings">Settings</span></button>
+        </nav>
+        <div class="shade-handle"><i class="shade-pill"></i></div>
+      </div>
+    </div>
+
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+    <div class="sheet-layer" id="sheetLayer"></div>
+    <div class="takeover" id="takeover" role="alertdialog"></div>
+    <div class="ambient" id="ambient"></div>
+    <div class="night" id="night"></div>
+    <div class="demo" id="demo"></div>
+  </div>
+
+  <script>
+    // A wall screen must recover by itself: if the app didn't start (a network blip mid-load,
+    // or a stale page right after an update), reload until it does.
+    setTimeout(function () { if (!window.App || !window.App.current) location.reload(); }, 10000);
+  </script>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

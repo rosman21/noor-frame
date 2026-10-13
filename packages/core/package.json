@@ -1,0 +1,10 @@
+{
+  "name": "@noor-frame/core",
+  "version": "0.1.0",
+  "description": "Shared pieces for noor-frame: the integration contract, settings, storage, encrypted secrets and HTTP helpers.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  }
+}

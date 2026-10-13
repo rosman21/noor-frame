@@ -1,0 +1,12 @@
+{
+  "name": "@noor-frame/ai-claude",
+  "version": "0.1.0",
+  "description": "Optional AI for noor-frame using Claude: a daily brief and questions from your phone.",
+  "license": "MIT",
+  "type": "module",
+  "exports": { ".": "./src/index.js" },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
+    "@noor-frame/core": "*"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "@noor-frame/quran-alquran-cloud",
+  "version": "0.1.0",
+  "description": "Ayah of the day from AlQuran Cloud.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "@noor-frame/core": "*"
+  }
+}

@@ -1,0 +1,22 @@
+# The noor-frame server: the dashboard, the phone companion and the API, on port 8787.
+[Unit]
+Description=noor-frame server
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=noor
+WorkingDirectory=@APP_DIR@
+Environment=NOOR_HOME=/var/lib/noor-frame
+Environment=PORT=8787
+EnvironmentFile=-/etc/noor-frame/server.env
+ExecStart=/usr/bin/env node apps/server/src/node.js
+Restart=always
+RestartSec=3
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/noor-frame
+
+[Install]
+WantedBy=multi-user.target

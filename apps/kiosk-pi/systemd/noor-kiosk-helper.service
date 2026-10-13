@@ -1,0 +1,20 @@
+# Serves the dashboard to the screen's browser on localhost:8788, runs Wi-Fi setup, and turns the
+# display on and off for the night setting.
+[Unit]
+Description=noor-frame kiosk helper
+After=NetworkManager.service
+
+[Service]
+User=noor
+ExecStart=/usr/bin/python3 @APP_DIR@/apps/kiosk-pi/helper/noor_kiosk.py
+Environment=NOOR_KIOSK_CONFIG=/etc/noor-frame/kiosk.json
+# The screen's Wayland session, for turning an HDMI display off (wlopm / wlr-randr).
+Environment=XDG_RUNTIME_DIR=/run/user/@UID@
+Environment=WAYLAND_DISPLAY=wayland-0
+# The phone's setup page is on port 80 of the setup network.
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

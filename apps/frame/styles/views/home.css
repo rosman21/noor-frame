@@ -1,0 +1,205 @@
+/* Today. The view's content box is 1232 × 752 (the 1280 × 800 stage minus padding) and never
+   scrolls: a 12-column grid with a fixed-height top row. */
+
+.home {
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: 184px 1fr;
+  gap: 16px;
+}
+
+/* The three top blocks sit on a heavy rule, bottom-aligned. */
+.h-clock, .h-weather, .h-prayer {
+  display: flex; flex-direction: column; justify-content: flex-end;
+  border-bottom: 3px solid var(--ink);
+}
+
+/* ================================================================ clock (cols 1–4) */
+.h-clock { grid-column: 1 / 5; padding-bottom: 6px; }
+.h-time { display: flex; align-items: flex-start; font-size: var(--fs-clock); line-height: .78; letter-spacing: -.035em; }
+.h-ampm { margin: 6px 0 0 10px; font-size: 28px; font-weight: 800; letter-spacing: .06em; }
+.h-date { margin-top: 14px; font-family: var(--serif); font-size: 24px; }
+.h-date b {
+  margin-right: 6px;
+  font-family: var(--sans); font-size: 20px; font-weight: 800; font-stretch: 75%;
+  letter-spacing: .06em; text-transform: uppercase;
+}
+
+/* ================================================================ weather (cols 5–9) */
+.h-weather { grid-column: 5 / 10; padding: 0 8px 6px; cursor: pointer; }
+.h-wx-top { display: flex; align-items: center; gap: 12px; }
+.h-wx-icon { color: var(--ink); }
+.h-wx-temp { font-size: 84px; line-height: .8; letter-spacing: -.03em; }
+.h-wx-meta { display: flex; flex-direction: column; margin-left: 4px; font-size: 17px; }
+.h-wx-meta b { font-size: 16px; font-weight: 800; font-stretch: 80%; letter-spacing: .06em; text-transform: uppercase; }
+.h-wx-meta span { color: var(--mute); font-variant-numeric: tabular-nums; white-space: pre; }
+.h-wx-say { margin: 8px 0; font-family: var(--serif); font-size: 22px; line-height: 1.15; }
+.h-wx-say b { font-weight: 400; font-style: italic; }
+
+.h-wx-hours { display: grid; grid-template-columns: repeat(7, 1fr); }
+.h-hr { display: flex; flex-direction: column; align-items: center; gap: 1px; font-size: 16px; }
+.h-hr b { font-weight: 800; font-stretch: 70%; }
+.h-hr-i { height: 26px; display: grid; place-items: center; }
+/* small uppercase labels: hours here, weekdays in "Next days" */
+.h-hr-l { font-size: var(--fs-min); font-weight: 700; color: var(--mute); text-transform: uppercase; }
+.h-hr.is-wet .h-hr-i, .h-fc-d.is-wet .i { color: var(--rain, #1F6FEB); }
+
+/* ================================================================ next prayer (cols 10–12)
+   Markup comes from prayer.js (App.prayerNextBlock). */
+.h-prayer { grid-column: 10 / 13; width: 100%; gap: 2px; padding: 0 0 8px; }
+.pn-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 2px; }
+.pn-name { font-size: 54px; line-height: .95; }
+.pn-ar { font-family: var(--arabic); font-size: 30px; line-height: 1; color: var(--ink-2); }
+.pn-time { display: flex; align-items: baseline; gap: 6px; }
+.pn-time b { font-size: 40px; line-height: 1; }
+.pn-time span { font-size: 16px; font-weight: 800; letter-spacing: .06em; }
+.pn-time em {
+  margin-left: auto;
+  font-style: normal; font-size: 16px; font-weight: 800; font-stretch: 75%;
+  letter-spacing: .05em; text-transform: uppercase; color: var(--prayer);
+}
+.pn-hijri { font-size: 18px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pn-wait { margin-top: 8px; font-size: 22px; color: var(--mute); }
+
+/* ================================================================ main column (cols 1–7) */
+.h-main { grid-column: 1 / 8; display: grid; grid-template-rows: 232px 1fr; gap: 16px; min-height: 0; }
+
+/* ---- next up: a block in the person's colour */
+.h-hero-slot { display: grid; }
+.h-hero {
+  position: relative; overflow: hidden;
+  width: 100%; display: flex; align-items: stretch; gap: 20px;
+  padding: 22px 26px; border-radius: var(--r);
+  background: var(--c); color: var(--c-ink);
+}
+.h-hero:active { transform: scale(.985); }
+.h-hero-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.h-hero-title { margin: 8px 0; font-size: 72px; line-height: .95; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.h-hero-meta { font-size: 19px; opacity: .88; }
+.h-hero-foot { margin-top: auto; display: flex; align-items: center; gap: 14px; }
+.h-hero-foot .dots i { box-shadow: 0 0 0 3px var(--c); }
+.h-hero-count {
+  display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
+  text-align: right; font-size: 150px; line-height: .78; letter-spacing: -.04em;
+}
+.h-hero-count small { margin-top: 10px; font-size: 22px; font-stretch: 80%; letter-spacing: .1em; text-transform: uppercase; }
+.h-hero--empty { flex-direction: column; justify-content: center; background: var(--ink); color: var(--paper); }
+.h-hero--empty .label { color: inherit; opacity: .6; }
+.h-hero--empty .h-hero-title { white-space: normal; font-size: 56px; }
+/* Nothing left today, but something tomorrow: a short heading, then tomorrow's first event. */
+.h-hero--tomorrow { justify-content: flex-start; }
+.h-hero--tomorrow .h-hero-title { flex: none; margin: 4px 0 0; font-size: 40px; line-height: 1.1; white-space: nowrap; }
+.h-tmrw { flex: none; margin-top: auto; padding-top: 10px; border-top: 2px solid currentColor; border-top-color: rgba(127, 127, 127, .35); }
+.h-tmrw .label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.h-tmrw-title {
+  margin-top: 6px; font-size: 26px; font-weight: 800; line-height: 1.15;
+  overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+}
+
+/* ---- today's calendar: one card down to the bottom, a column per person
+   (--lanes, the number of calendars, is set on the stage by live.js) */
+.h-lanes {
+  min-height: 0; overflow: hidden;
+  display: grid; grid-template-columns: repeat(var(--lanes, 4), 1fr); gap: 14px;
+  padding: 16px 16px 14px; border-radius: var(--r); background: var(--card);
+}
+.h-lane { min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 6px; }
+.h-lane .is-hidden { display: none; } /* trimmed by fitLanes() */
+.h-lane-head {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 4px; padding-top: 10px;
+  border-top: 5px solid var(--c); border-radius: 3px 3px 0 0;
+}
+.h-lane-head b { font-size: 18px; font-weight: 800; font-stretch: 80%; letter-spacing: .06em; text-transform: uppercase; }
+
+.h-ev {
+  width: 100%; min-width: 0; min-height: 60px; overflow: hidden;
+  display: flex; flex-direction: column; gap: 1px;
+  padding: 7px 12px; border-radius: 12px;
+  background: rgb(var(--c-rgb) / var(--tint));
+}
+.h-ev-t { font-size: 16px; font-weight: 800; font-stretch: 70%; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.h-ev-n { display: block; width: 100%; font-size: 18px; font-weight: 600; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.h-ev.is-now { background: var(--c); color: var(--c-ink); }
+.h-ev.is-now .h-ev-t { color: inherit; letter-spacing: .08em; text-transform: uppercase; }
+
+.h-free { padding: 6px 2px; font-size: 21px; line-height: 1.1; color: var(--mute); }
+.h-more {
+  min-height: 36px; margin-top: auto; padding: 0 12px; text-align: left;
+  font-size: 16px; font-weight: 800; font-stretch: 75%; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2);
+}
+.h-setup { grid-column: 1 / -1; align-self: center; background: none; border: 0; padding: 0; font-family: var(--serif, inherit); cursor: pointer; text-align: center; font-size: 30px; line-height: 1.2; color: var(--ink-2); }
+.h-setup b { font-family: var(--sans); font-size: 22px; font-weight: 800; }
+
+/* ================================================================ side column (cols 8–12) */
+.h-side { grid-column: 8 / 13; min-height: 0; display: grid; grid-template-rows: 1fr 138px 140px; gap: 14px; }
+
+/* ---- ayah of the day: green tile, text shrinks to fit (--k, set by fitAyah) */
+.h-ayah {
+  width: 100%; min-height: 0; overflow: hidden; cursor: pointer; text-align: left;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 18px 24px 20px; border-radius: var(--r);
+  background: var(--prayer); color: #fff;
+}
+.ay-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ay-head .label { margin-right: auto; }
+.ay-ref { font-size: var(--fs-min); font-weight: 800; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; opacity: .9; }
+.ay-play {
+  flex: none; width: 48px; height: 48px; margin: -8px -8px -8px 2px;
+  display: grid; place-items: center; border-radius: 50%;
+  background: #fff; color: var(--prayer);
+}
+.ay-play .i { margin-left: 2px; } /* optically centre the play triangle */
+.ay-play.is-on .i { margin-left: 0; }
+.ay-play.is-on { box-shadow: 0 0 0 4px rgba(255, 255, 255, .3); }
+.ay-play:active { transform: scale(.9); }
+.ay-body { --k: 1; flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+.ay-ar { font-family: var(--quran); font-size: calc(30px * var(--k)); line-height: 1.8; text-align: right; }
+.ay-tr { font-size: calc(21px * var(--k)); line-height: 1.22; color: rgba(255, 255, 255, .9); }
+
+/* ---- today's prayers (markup from prayer.js: App.prayerStrip) */
+button.h-prayers { display: flex; flex-direction: column; gap: 6px; padding: 14px 18px; }
+.h-prayers > .label { width: 100%; }
+.ps-loc { margin-left: auto; font-weight: 600; letter-spacing: .04em; }
+.ps-grid { flex: 1; width: 100%; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.ps-p { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px 0; border-radius: var(--r-s); }
+.ps-p b { font-size: 30px; line-height: 1; }
+.ps-n { font-size: var(--fs-min); font-weight: 800; font-stretch: 75%; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2); }
+.ps-ar { font-family: var(--arabic); font-size: 17px; line-height: 1.1; color: var(--mute); }
+.ps-p.is-past { opacity: .42; }
+.ps-p.is-now { box-shadow: inset 0 0 0 2px var(--prayer); }
+.ps-p.is-next { background: var(--prayer); color: #fff; }
+.ps-p.is-next .ps-n, .ps-p.is-next .ps-ar { color: rgba(255, 255, 255, .85); }
+
+/* ---- next days (each day opens its 3-hourly sheet) */
+.h-forecast { display: flex; flex-direction: column; gap: 6px; padding: 14px 12px 18px; }
+.h-fc { flex: 1; display: grid; grid-template-columns: repeat(5, 1fr); }
+.h-fc-d { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: var(--r-s); }
+.h-fc-d:active { background: var(--paper-2); }
+.h-fc-d b { font-size: 22px; line-height: 1; }
+.h-fc-d small { font-size: 16px; color: var(--mute); }
+
+/* ================================================================ one day's weather (sheet) */
+.sheet--wx { width: 1040px; }
+.wxs { padding: 30px 34px 34px; }
+.wxs-head { display: flex; align-items: center; gap: 12px; margin-bottom: 26px; padding-right: 70px; }
+.wxs-head .icon-btn { width: 56px; height: 56px; border: 2px solid var(--line); }
+.wxs-head .icon-btn:disabled { opacity: .3; }
+.wxs-title { min-width: 220px; text-align: center; }
+.wxs-title .label { justify-content: center; }
+.wxs-title h2 { margin-top: 2px; font-size: 50px; line-height: 1; }
+.wxs-sum { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+.wxs-sum b { font-size: 44px; }
+.wxs-sum small { font-size: 26px; color: var(--mute); }
+.wxs-sum em { max-width: 200px; font-style: normal; font-size: 20px; line-height: 1.2; color: var(--ink-2); }
+
+.wxs-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.wxs-s {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 18px 8px 16px; border-radius: 18px; background: var(--card);
+}
+.wxs-s.is-past { opacity: .4; }
+.wxs-h { font-size: 20px; font-weight: 800; font-stretch: 75%; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
+.wxs-s b { font-size: 48px; line-height: 1; }
+.wxs-p { display: flex; align-items: center; gap: 4px; font-size: 20px; font-weight: 700; color: var(--mute); }
+.wxs-s.is-wet > .i, .wxs-s.is-wet .wxs-p { color: var(--rain, #1F6FEB); }

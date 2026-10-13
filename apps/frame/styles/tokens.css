@@ -1,0 +1,89 @@
+/* Design tokens. Everything visual reads these, so the dark theme only redefines them.
+   Target: Android WebView 106, so no CSS nesting, color-mix(), oklch() or dvh. */
+
+:root {
+  /* Surfaces and text: warm paper, near-black ink */
+  --paper: #F2EEE6;
+  --paper-rgb: 242 238 230;
+  --paper-2: #E8E2D5;      /* pressed states, tracks */
+  --card: #FBF9F4;
+  --ink: #111111;
+  --ink-rgb: 17 17 17;
+  --ink-2: #3B3934;        /* secondary text */
+  --mute: #7A756B;         /* labels, hints */
+  --line: #D6CFC0;
+
+  /* Signals */
+  --alert: #E5261E;
+  --alert-rgb: 229 38 30;
+  --amber: #FF9500;
+  --amber-rgb: 255 149 0;
+  --ok: #00A36C;
+  --warm: #FFC45C;
+  --warm-rgb: 255 196 92;
+  --night: #D8321F;
+  --prayer: #0B7A5B;       /* the green of everything prayer and Quran */
+  --prayer-rgb: 11 122 91;
+  --rain: #1F6FEB;
+
+  /* A calendar's colour, set per element by App.pstyle() */
+  --c: var(--ink);
+  --c-rgb: var(--ink-rgb);
+  --c-ink: #FFFFFF;
+  /* How strongly a calendar colour tints a card (stronger on dark, where faint tints vanish) */
+  --tint: .12;
+  --tint-2: .14;
+  --stripe: .45;
+  --stripe-2: .08;
+
+  /* Type. Settings → Text style / Arabic font replace these four at runtime. */
+  --sans: 'Archivo', 'Roboto Condensed', 'Roboto', system-ui, sans-serif;
+  --serif: 'Instrument Serif', 'Noto Serif', Georgia, serif;
+  --arabic: 'Amiri', 'Noto Naskh Arabic', serif;
+  --quran: 'Amiri Quran', 'Amiri', 'Noto Naskh Arabic', serif;
+  --fs-clock: 150px;
+  --fs-hero: 76px;
+  --fs-xl: 56px;
+  --fs-l: 34px;
+  --fs-m: 24px;
+  --fs-body: 20px;
+  --fs-label: 15px;
+  --fs-min: 14px;
+
+  /* Shape, spacing, motion */
+  --r: 18px;
+  --r-s: 12px;
+  --gap: 16px;
+  --pad: 24px;
+  --tap: 64px;             /* smallest comfortable touch target */
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --spring: cubic-bezier(.34, 1.56, .64, 1);
+}
+
+/* Dark theme: Settings → Display → Theme (or Automatic, from Maghrib to sunrise).
+   The same warm pairing, inverted. Surfaces that use ink as a background flip to light. */
+:root[data-theme="dark"] {
+  --paper: #141311;
+  --paper-rgb: 20 19 17;
+  --paper-2: #26241F;
+  --card: #1D1B18;
+  --ink: #EEE9DF;
+  --ink-rgb: 238 233 223;
+  --ink-2: #CBC4B6;
+  --mute: #A9A294;
+  --line: #36332C;
+  --prayer: #11906B;
+  --prayer-rgb: 17 144 107;
+  --tint: .5;
+  --tint-2: .52;
+  --stripe: .75;
+  --stripe-2: .2;
+}
+
+/* On dark, calendar colours are lifted toward white so they stay vivid (App.pstyle supplies
+   --c-d / --c-drgb). !important is needed to beat the inline style that sets --c. */
+:root[data-theme="dark"] [style*="--c-d:"] { --c: var(--c-d) !important; --c-rgb: var(--c-drgb) !important; }
+
+/* Small labels on dark cards read as near-white; the prayer card's heading is full white. */
+:root[data-theme="dark"] .label:not(.label--light):not(.label--on) { color: var(--ink-2); }
+:root[data-theme="dark"] .h-prayers .label:not(.label--light), :root[data-theme="dark"] .ps-loc { color: var(--ink); }

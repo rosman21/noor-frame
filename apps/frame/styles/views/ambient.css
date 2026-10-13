@@ -1,0 +1,66 @@
+/* Resting screens. Both cover the whole stage and are shown by the stage's data-mode. */
+
+/* ================================================================ ambient: deep green */
+.ambient {
+  position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 65;
+  display: none; overflow: hidden; cursor: pointer;
+  background: #06402F; color: #fff;
+}
+.stage[data-mode="ambient"] .ambient { display: block; }
+.amb-glow {
+  position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+  background:
+    radial-gradient(ellipse at 80% 10%, rgba(255, 255, 255, .1), rgba(255, 255, 255, 0) 60%),
+    linear-gradient(160deg, #0B7A5B 0%, #06402F 70%);
+}
+.amb-info {
+  position: absolute; top: 56px; right: 64px; bottom: 52px; left: 64px;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.amb-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 40px; }
+
+.amb-time { display: flex; align-items: flex-start; font-size: 230px; line-height: .78; letter-spacing: -.04em; }
+.amb-time small { margin: 10px 0 0 14px; font-size: 34px; letter-spacing: .06em; }
+.amb-date { margin-top: 22px; display: flex; flex-direction: column; gap: 4px; font-family: var(--serif); font-size: 38px; }
+.amb-date i { font-size: 26px; opacity: .75; }
+
+.amb-right { padding-top: 8px; display: flex; flex-direction: column; align-items: flex-end; gap: 16px; }
+.amb-wx { display: flex; align-items: center; gap: 12px; }
+.amb-wx .num { font-size: 72px; line-height: .8; }
+.amb-wx small { max-width: 240px; font-family: var(--serif); font-size: 24px; font-style: italic; line-height: 1.05; }
+
+/* pills: the next prayer (white) and the next event (glass) */
+.amb-pr, .amb-next {
+  height: 54px; padding: 0 22px; border-radius: 999px;
+  display: inline-flex; align-items: center; gap: 10px;
+  font-size: 21px; background: rgba(255, 255, 255, .14);
+}
+.amb-pr { background: #fff; color: var(--prayer); }
+.amb-pr b { font-weight: 800; font-stretch: 80%; letter-spacing: .05em; text-transform: uppercase; }
+.amb-pr small { font-size: 17px; opacity: .8; }
+.amb-next i { width: 12px; height: 12px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px #fff; }
+
+.amb-ayah { max-width: 1000px; margin-left: auto; text-align: right; }
+.amb-ar { font-family: var(--quran); font-size: 46px; line-height: 1.75; }
+.amb-tr { margin-top: 8px; font-family: var(--serif); font-size: 26px; line-height: 1.3; opacity: .85; }
+.amb-tr span {
+  margin-left: 10px; white-space: nowrap; opacity: .75;
+  font-family: var(--sans); font-size: 15px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+}
+
+/* ================================================================ night: dim red clock
+   Dark enough not to light up a bedroom, but never below a readable brightness. */
+.night {
+  position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 66;
+  display: none; place-items: center; cursor: pointer;
+  background: #000;
+}
+.stage[data-mode="night"] .night { display: grid; }
+.nt-inner { text-align: center; color: #B8281A; }
+.nt-time { font-size: 260px; line-height: .8; letter-spacing: -.04em; color: #C22C1C; }
+.nt-line { margin-top: 34px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 26px; color: #A02618; }
+.nt-line b { color: #C22C1C; }
+.nt-lock {
+  margin-top: 18px; display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 18px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #7A1D12;
+}

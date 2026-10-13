@@ -1,0 +1,18 @@
+{
+  // Optional: host on Cloudflare instead of a computer at home. From apps/server:
+  //   npx wrangler deploy
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "noor-frame",
+  "main": "./src/worker.js",
+  "compatibility_date": "2026-09-30",
+  "assets": { "directory": "../frame/dist" }
+
+  // To save settings, calendars and keys, create storage and a secret once:
+  //   npx wrangler kv namespace create FRAME_KV
+  //   npx wrangler secret put FRAME_SECRET        (any long random text)
+  // then add (with a comma after the "assets" line above):
+  // "kv_namespaces": [{ "binding": "FRAME_KV", "id": "<id from the first command>" }]
+  //
+  // Household defaults (what frame.config.json does at home) go in a variable:
+  // "vars": { "FRAME_CONFIG": { "location": { "city": "Toronto", "country": "Canada" } } }
+}

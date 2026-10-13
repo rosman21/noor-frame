@@ -1,0 +1,214 @@
+/* Calendar screen: header, hour grid (Today / 3 Day), week columns, month grid, event sheet.
+   Colours come from tokens and from App.pstyle (--c, --c-rgb, --c-ink), so dark mode works. */
+
+#view-calendar { padding-top: 14px; }
+/* Keep the header's buttons clear of the menu's grab strip (see .view in base.css). */
+.stage[data-menu="top"] #view-calendar { padding-top: 36px; }
+.cal { display: flex; flex-direction: column; height: 100%; }
+.cal-body { position: relative; flex: 1; min-height: 0; }
+
+/* ---------------------------------------------------------------- header */
+.cal-head { flex: none; display: flex; align-items: center; gap: 8px; height: 52px; margin-bottom: 8px; }
+.cal-head .back-btn { margin-right: 12px; }
+.cal-head .icon-btn { width: 52px; height: 52px; }
+.cal-head .btn { min-height: 52px; padding: 0 20px; font-size: 15px; }
+.cal-head [data-today] { margin-right: auto; }
+.cal-head .seg { padding: 3px; }
+.cal-head .seg button { min-height: 46px; padding: 0 18px; font-size: 15px; }
+.cal-title { display: flex; align-items: baseline; gap: 12px; min-width: 300px; padding: 0 6px; }
+.cal-title .serif { font-size: 34px; line-height: 1; white-space: nowrap; }
+
+/* ---------------------------------------------------------------- hour grid */
+.cal-day { position: relative; display: flex; flex-direction: column; height: 100%; }
+.grid-scroll { position: relative; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.grid { position: relative; margin: 14px 0; }
+.hours { position: absolute; inset: 0; }
+.hr { position: absolute; left: 64px; right: 0; border-top: 1px solid var(--line); }
+.hr span {
+  position: absolute; top: -9px; left: -64px; width: 56px;
+  text-align: right; white-space: nowrap;
+  font-size: var(--fs-min); font-weight: 700; font-stretch: 80%; color: var(--mute);
+}
+.lanes {
+  position: absolute; top: 0; bottom: 0; left: 64px; right: 0;
+  display: grid; grid-template-columns: repeat(var(--lanes, 4), 1fr);
+}
+.lanes--3 { grid-template-columns: repeat(3, 1fr); }
+.lane { position: relative; border-left: 1px solid var(--line); }
+.lane.is-today { background: rgb(var(--ink-rgb) / .04); }
+/* Family events float over every lane but let taps through elsewhere. */
+.lane-fam { position: absolute; inset: 0; pointer-events: none; }
+.lane-fam .ev { pointer-events: auto; }
+
+/* 3-day column heads */
+.lanes-head { flex: none; display: grid; grid-template-columns: 64px repeat(3, 1fr); }
+.day-head {
+  display: flex; align-items: baseline; gap: 10px;
+  margin: 0 4px; padding: 0 14px 6px; border-bottom: 5px solid var(--ink);
+}
+.day-head .num { font-size: 30px; line-height: .9; }
+.day-head b { font-size: 17px; font-weight: 800; font-stretch: 80%; letter-spacing: .05em; text-transform: uppercase; }
+.day-head small { margin-left: auto; font-size: var(--fs-min); font-weight: 700; color: var(--mute); text-transform: uppercase; }
+.day-head.is-today { padding-top: 8px; border-radius: 12px 12px 0 0; background: var(--ink); color: var(--paper); }
+
+/* all-day row */
+.allday { flex: none; display: grid; grid-template-columns: 64px 1fr; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.allday .gutter { padding-right: 6px; font-size: 12px; line-height: 1.1; }
+.allday-grid { display: grid; grid-template-columns: repeat(var(--lanes, 4), 1fr); gap: 6px 8px; padding: 0 4px; }
+.allday-grid--3 { grid-template-columns: repeat(3, 1fr); }
+.ad {
+  display: flex; align-items: center; gap: 6px;
+  min-height: 44px; padding: 0 14px; border-radius: 10px;
+  background: var(--c); color: var(--c-ink);
+  font-size: 17px; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ad small { margin-left: 4px; font-size: var(--fs-min); font-weight: 600; opacity: .75; }
+.ad--cont { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+
+/* the red now-line (in 3 Day it covers only today's column) */
+.now-line { position: absolute; left: 64px; right: 0; height: 0; z-index: 4; border-top: 3px solid var(--alert); pointer-events: none; }
+.now-line::before { content: ''; position: absolute; top: -8px; left: -7px; width: 13px; height: 13px; border-radius: 50%; background: var(--alert); }
+.now-line span {
+  position: absolute; top: -15px; right: calc(100% + 10px);
+  padding: 3px 7px; border-radius: 8px;
+  background: var(--alert); color: #fff; font-size: 17px; line-height: 1.2;
+}
+.now-line--0 { right: calc((100% - 64px) * 2 / 3); }
+.now-line--1 { left: calc(64px + (100% - 64px) / 3); right: calc((100% - 64px) / 3); }
+.now-line--2 { left: calc(64px + (100% - 64px) * 2 / 3); }
+.now-line--1 span, .now-line--2 span { display: none; }
+
+.cal-empty {
+  position: absolute; top: 45%; left: 64px; right: 0;
+  text-align: center; font-size: 48px; line-height: 1.05; color: var(--mute);
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- event blocks */
+.ev {
+  position: absolute; z-index: 1;
+  display: flex; flex-direction: column; justify-content: flex-start; gap: 2px;
+  padding: 7px 12px; border-radius: 12px; overflow: hidden;
+  background: var(--c); color: var(--c-ink); text-align: left;
+}
+/* Events are buttons; older Chrome lets a button's content grow past it, so pin the width. */
+.ev > * { max-width: 100%; }
+.ev:active { transform: scale(.98); }
+.ev-title { padding-right: 30px; font-size: 18px; font-weight: 800; line-height: 1.1; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.ev-meta { font-size: var(--fs-min); font-weight: 600; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev-meta b { display: inline-flex; align-items: center; gap: 4px; font-weight: 800; vertical-align: bottom; }
+.ev-with { position: absolute; top: 9px; right: 8px; }
+.ev-with .dots i { box-shadow: 0 0 0 2px var(--paper); }
+
+.ev.is-family { background: var(--ink); color: var(--paper); }
+.ev.is-past { opacity: .38; }
+.ev.is-now { z-index: 2; box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--c); }
+/* under 45 minutes: title and time on one line */
+.ev.is-short { flex-direction: row; align-items: center; gap: 8px; padding-top: 0; padding-bottom: 0; }
+.ev.is-short .ev-title { flex: none; max-width: 60%; padding-right: 0; font-size: 16px; display: block; white-space: nowrap; text-overflow: ellipsis; }
+.ev.is-short .ev-with { display: none; }
+/* half width (two side by side) */
+.ev.is-half .ev-title { padding-right: 0; }
+.ev.is-half .ev-with { display: none; }
+.ev.is-half.is-short .ev-meta { display: none; }
+.ev.is-half.is-short .ev-title { flex: 1; min-width: 0; max-width: 100%; }
+
+/* striped travel time right above an event */
+.ev-travel {
+  position: absolute; bottom: 100%; left: 8px; right: 8px;
+  border-radius: 8px 8px 0 0;
+  background: repeating-linear-gradient(-45deg, rgb(var(--c-rgb) / var(--stripe)) 0 5px, rgb(var(--c-rgb) / var(--stripe-2)) 5px 10px);
+}
+
+/* "+N more" for crowded times */
+.ev--more {
+  flex-direction: row; align-items: center; justify-content: center; gap: 6px;
+  border: 2px dashed var(--ink-2); background: var(--paper); color: var(--ink);
+  font-size: 24px; font-weight: 900; font-stretch: 70%;
+}
+.ev--more small { font-size: var(--fs-min); letter-spacing: .08em; text-transform: uppercase; }
+
+/* ---------------------------------------------------------------- week */
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; height: 100%; }
+.wk-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.wk-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 4px; padding: 6px 10px 8px; border-bottom: 5px solid var(--ink);
+}
+.wk-head b { font-size: 18px; font-weight: 800; font-stretch: 80%; letter-spacing: .06em; text-transform: uppercase; }
+.wk-head .num { font-size: 32px; line-height: .9; }
+.wk-col.is-today .wk-head { border-radius: 12px 12px 0 0; background: var(--ink); color: var(--paper); }
+.wk-ad {
+  min-height: 40px; padding: 0 10px; border-radius: 8px;
+  background: var(--c); color: var(--c-ink); text-align: left;
+  font-size: var(--fs-min); font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.wk-ev {
+  display: flex; flex-direction: column; gap: 1px;
+  min-height: 60px; padding: 6px 10px; border-radius: 10px;
+  background: rgb(var(--c-rgb) / var(--tint-2)); text-align: left;
+}
+.wk-ev.is-past { opacity: .45; }
+.wk-t { font-size: var(--fs-min); font-weight: 800; font-stretch: 70%; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.wk-t::before { content: ''; display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%; background: var(--c); vertical-align: 1px; }
+.wk-n { font-size: 16px; font-weight: 600; line-height: 1.15; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.wk-more { min-height: 48px; padding: 0 10px; text-align: left; color: var(--ink-2); font-size: 15px; font-weight: 800; font-stretch: 75%; letter-spacing: .06em; text-transform: uppercase; }
+.wk-free { padding: 8px 10px; font-size: 22px; color: var(--mute); }
+
+/* ---------------------------------------------------------------- month */
+.month { display: flex; flex-direction: column; height: 100%; }
+.mo-dow { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; padding-bottom: 8px; }
+.mo-dow .label { padding-left: 12px; }
+.mo-grid { flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(6, 1fr); gap: 6px; }
+.mo-cell {
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 8px 12px; border-radius: 12px; background: var(--card);
+}
+.mo-cell .num { font-size: 30px; line-height: 1; }
+.mo-cell.is-out { opacity: .35; }
+.mo-cell.is-today { background: var(--ink); color: var(--paper); }
+.mo-dots { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.mo-dots i { width: 12px; height: 12px; border-radius: 50%; background: var(--c); }
+/* Family dots use the ink colour, which would vanish on today's ink-filled cell. */
+.mo-cell.is-today .mo-dots i[style*="--c:var(--ink)"] { background: var(--paper); }
+.mo-dots em { font-style: normal; font-size: 13px; font-weight: 800; }
+
+/* ---------------------------------------------------------------- event sheet */
+.sheet--event { width: 640px; overflow: hidden; }
+.sheet--event .sheet-x { background: rgba(255, 255, 255, .22); color: var(--c-ink); }
+.evs-band { padding: 34px 36px 30px; background: var(--c); color: var(--c-ink); }
+.evs-band h2 { margin: 8px 0 12px; padding-right: 50px; font-size: 68px; line-height: .95; }
+.evs-time { font-size: 36px; }
+.evs-body { padding: 18px 36px 32px; }
+.evs-row { display: flex; align-items: center; gap: 18px; min-height: 76px; border-bottom: 1px solid var(--line); }
+.evs-row > div { display: flex; flex-direction: column; }
+.evs-row b { font-size: 21px; font-weight: 700; }
+.evs-row span { font-size: 16px; color: var(--mute); }
+.evs-people { flex-direction: row !important; flex-wrap: wrap; gap: 8px; padding: 10px 0; }
+.evs-notes { padding-top: 22px; font-size: 28px; font-style: italic; line-height: 1.2; }
+
+/* trip card: when to leave (left) and a directions QR code (right) */
+.trip { display: flex; align-items: center; gap: 20px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+.trip-main { flex: 1; display: flex; align-items: flex-start; gap: 18px; min-width: 0; }
+.trip-main > .i { margin-top: 4px; color: var(--c); }
+.trip-main > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.trip-main small { font-size: var(--fs-min); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--mute); }
+.trip-leave { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.trip-leave b { font-size: 28px; font-weight: 800; font-stretch: 80%; }
+.trip-meta { font-size: 19px; color: var(--ink-2); }
+.trip-meta b { font-size: 22px; }
+.trip .pill { height: 36px; font-size: 15px; background: rgb(var(--c-rgb) / var(--tint-2)); color: var(--ink); }
+.trip .pill--soon { background: var(--ink); color: var(--paper); }
+.trip .pill--alert { background: var(--alert); color: #fff; }
+.trip-qr { flex: none; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 108px; }
+/* QR codes stay black on white in both themes, so phones can read them */
+.trip-qr svg { display: block; width: 108px; height: 108px; padding: 6px; border-radius: 10px; background: #fff; box-shadow: inset 0 0 0 1px var(--line); }
+.trip-qr span { text-align: center; font-size: 12px; font-weight: 800; font-stretch: 75%; letter-spacing: .06em; text-transform: uppercase; color: var(--mute); }
+
+/* overlapping events sheet */
+.more-list { display: flex; flex-direction: column; gap: 8px; }
+.more-row { display: flex; align-items: center; gap: 14px; min-height: 72px; padding: 0 20px; border-radius: 14px; background: rgb(var(--c-rgb) / var(--tint)); }
+.more-row i { width: 14px; height: 14px; border-radius: 50%; background: var(--c); }
+.more-row b { flex: 1; font-size: 21px; }
+.more-row span { font-size: 16px; color: var(--mute); }

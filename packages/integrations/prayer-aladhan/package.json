@@ -1,0 +1,13 @@
+{
+  "name": "@noor-frame/prayer-aladhan",
+  "version": "0.1.0",
+  "description": "Prayer times and Hijri date from AlAdhan.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "@noor-frame/core": "*"
+  }
+}

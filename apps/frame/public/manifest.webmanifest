@@ -1,0 +1,13 @@
+{
+  "name": "noor-frame",
+  "short_name": "noor-frame",
+  "description": "Prayer times, athan, ayah of the day, family calendars and weather for a wall screen.",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#F2EEE6",
+  "theme_color": "#0B7A5B",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

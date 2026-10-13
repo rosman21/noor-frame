@@ -1,0 +1,30 @@
+node_modules/
+dist/
+.wrangler/
+
+# Your household's setup and saved data (calendar links, encrypted keys). Never commit these.
+frame.config.json
+data/
+
+# Local frame firmware, device dumps, and build trees.
+backups/
+diagnostics/
+__pycache__/
+*.pyc
+
+# Athan recordings are your own files (see apps/frame/public/audio/README.md).
+apps/frame/public/audio/*.mp3
+
+# Android build output
+apps/kiosk-android/build/
+*.apk
+*.keystore
+
+.DS_Store
+
+# Browser test output
+test-results/
+playwright-report/
+
+# Task briefs for coding agents (local only)
+handoff/

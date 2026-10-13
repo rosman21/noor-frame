@@ -1,0 +1,14 @@
+{
+  "name": "@noor-frame/calendar-ics",
+  "version": "0.1.0",
+  "description": "Family calendars from iCal/ICS links, added from a phone.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "@noor-frame/core": "*",
+    "ical.js": "^2.2.1"
+  }
+}

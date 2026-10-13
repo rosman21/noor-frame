@@ -1,0 +1,37 @@
+{
+  "name": "noor-frame",
+  "private": true,
+  "version": "0.1.0",
+  "description": "An Islamic family dashboard for a wall frame, Raspberry Pi or TV: prayer times, athan, ayah of the day, calendars, weather and optional AI.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rosman21/noor-frame.git"
+  },
+  "homepage": "https://github.com/rosman21/noor-frame#readme",
+  "bugs": {
+    "url": "https://github.com/rosman21/noor-frame/issues"
+  },
+  "type": "module",
+  "workspaces": [
+    "packages/core",
+    "packages/integrations/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "npm run build -w @noor-frame/frame && npm run build -w @noor-frame/companion",
+    "start": "npm run start -w @noor-frame/server",
+    "test": "node --test \"packages/**/test/*.test.js\" \"apps/server/test/*.test.js\"",
+    "icons": "npm run icons -w @noor-frame/frame",
+    "test:kiosk-pi": "python3 -m unittest discover -s apps/kiosk-pi/helper -q",
+    "test:a33": "python3 -m unittest discover -s scripts/a33-frame -q",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0"
+  }
+}

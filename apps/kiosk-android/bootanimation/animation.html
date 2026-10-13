@@ -1,0 +1,261 @@
+<!doctype html>
+<!--
+  Noor Frame's boot animation. نور (noor) means light: a point of light blooms in the dark, rays
+  and a wave of light turn the screen green, the word is written right to left by the light, and
+  NOOR FRAME appears beneath it. render(t) draws the frame at t seconds; render.mjs records it.
+
+  Two parts, like Android's bootanimation.zip: an intro (0 … INTRO s, played once) and a loop
+  (LOOP s, repeated until Android has started). Everything that moves in the loop is periodic in
+  LOOP, so the loop has no seam; everything in the intro has settled by INTRO.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Noor Frame boot animation</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Archivo:wdth,wght@100,600&display=block">
+<style>html, body { margin: 0; background: #000; } canvas { display: block; }</style>
+</head>
+<body>
+<canvas id="c" width="1280" height="800"></canvas>
+<script>
+  const W = 1280, H = 800, CX = 640, CY = 372;
+  const FPS = 20, INTRO = 3, LOOP = 4;
+  const TAU = Math.PI * 2;
+  const c = document.getElementById('c'), g = c.getContext('2d');
+
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const seg = (t, a, b) => clamp((t - a) / (b - a));
+  const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  const out = (x) => 1 - Math.pow(1 - x, 3);
+  const mix = (a, b, k) => a.map((v, i) => Math.round(v + (b[i] - v) * k));
+  const rgb = (a, alpha = 1) => `rgba(${a[0]},${a[1]},${a[2]},${alpha})`;
+  const loopPhase = (t, m = 1, ph = 0) => Math.sin(TAU * (t / LOOP * m + ph));
+
+  // Colours: night green → Noor green, and the light.
+  const DARK_CORE = [4, 22, 16], DARK_MID = [2, 12, 9], DARK_EDGE = [1, 5, 4];
+  const CORE = [22, 140, 100], MID = [10, 86, 62], EDGE = [3, 34, 25];
+  const CREAM = [255, 246, 220], GOLD = [242, 206, 120], DEEP_GOLD = [128, 92, 30];
+
+  // Seeded randomness, so every build draws the same motes.
+  let seed = 7;
+  const rnd = () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const MOTES = Array.from({ length: 80 }, () => {
+    const a = rnd() * TAU, d = 120 + Math.pow(rnd(), 0.7) * 560;
+    return {
+      x: CX + Math.cos(a) * d * 1.25, y: CY + Math.sin(a) * d * 0.7,
+      ax: 6 + rnd() * 22, ay: 6 + rnd() * 18, p1: rnd(), p2: rnd(), p3: rnd(),
+      tw: 1 + Math.floor(rnd() * 3), r: 0.8 + rnd() * 2.4, delay: 0.5 + rnd() * 1.8,
+    };
+  });
+
+  // The word, drawn once to its own canvas so it can be revealed, shone and extruded.
+  const word = document.createElement('canvas'); word.width = W; word.height = H;
+  const wg = word.getContext('2d');
+  let box = null;
+  function drawWord() {
+    wg.clearRect(0, 0, W, H);
+    wg.font = '700 300px Amiri';
+    wg.direction = 'rtl'; wg.textAlign = 'center'; wg.textBaseline = 'alphabetic';
+    const m = wg.measureText('نور');
+    const y = CY + 70;
+    box = { l: CX - m.width / 2 - 20, r: CX + m.width / 2 + 20, t: y - m.actualBoundingBoxAscent - 10, b: y + m.actualBoundingBoxDescent + 10, y };
+    const face = wg.createLinearGradient(0, box.t, 0, box.b);
+    face.addColorStop(0, rgb(CREAM)); face.addColorStop(0.55, rgb(GOLD)); face.addColorStop(1, rgb([226, 178, 84]));
+    wg.fillStyle = face;
+    wg.fillText('نور', CX, y);
+  }
+
+  function background(t, L) {
+    const bg = g.createRadialGradient(CX, CY, 0, CX, CY, 900);
+    bg.addColorStop(0, rgb(mix(DARK_CORE, CORE, L)));
+    bg.addColorStop(0.45, rgb(mix(DARK_MID, MID, L)));
+    bg.addColorStop(1, rgb(mix(DARK_EDGE, EDGE, L)));
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  }
+
+  // A wave of light that sweeps outward once, as the green arrives.
+  function wave(t) {
+    const k = seg(t, 0.55, 1.7);
+    if (k <= 0 || k >= 1) return;
+    const r = 40 + out(k) * 1000, a = (1 - k) * 0.35;
+    const w = g.createRadialGradient(CX, CY, Math.max(0, r - 90), CX, CY, r + 30);
+    w.addColorStop(0, rgb(CREAM, 0)); w.addColorStop(0.75, rgb(CREAM, a)); w.addColorStop(1, rgb(CREAM, 0));
+    g.globalCompositeOperation = 'lighter'; g.fillStyle = w; g.fillRect(0, 0, W, H); g.globalCompositeOperation = 'source-over';
+  }
+
+  // Rays: one ray-spacing of turn per loop, so the loop is seamless.
+  function rays(t, L) {
+    const n = 48, step = TAU / n, spin = (t / LOOP) * step;
+    const burst = 1 + 1.6 * Math.sin(Math.PI * seg(t, 0.4, 1.6)); // brighter as the light arrives
+    const alpha = 0.075 * L * burst * (1 + 0.15 * loopPhase(t, 1, 0.25));
+    if (alpha <= 0.001) return;
+    g.save(); g.translate(CX, CY); g.rotate(spin); g.globalCompositeOperation = 'lighter';
+    const grad = g.createRadialGradient(0, 0, 30, 0, 0, 820);
+    grad.addColorStop(0, rgb(CREAM, alpha)); grad.addColorStop(0.5, rgb(GOLD, alpha * 0.45)); grad.addColorStop(1, rgb(GOLD, 0));
+    g.fillStyle = grad;
+    for (let i = 0; i < n; i++) {
+      const a = i * step, w = (i % 3 === 0 ? 0.022 : 0.011);
+      g.beginPath(); g.moveTo(0, 0);
+      g.arc(0, 0, 900, a - w, a + w); g.closePath(); g.fill();
+    }
+    g.restore();
+  }
+
+  function glow(t, L) {
+    // The first point of light, growing until the glow takes over.
+    const s = seg(t, 0, 0.9);
+    if (s < 1) {
+      const r = 3 + out(seg(t, 0.05, 0.7)) * 60, a = Math.sin(Math.PI * s);
+      const p = g.createRadialGradient(CX, CY, 0, CX, CY, r);
+      p.addColorStop(0, rgb([255, 255, 255], a)); p.addColorStop(0.3, rgb(CREAM, a * 0.8)); p.addColorStop(1, rgb(GOLD, 0));
+      g.globalCompositeOperation = 'lighter'; g.fillStyle = p; g.fillRect(CX - r, CY - r, r * 2, r * 2); g.globalCompositeOperation = 'source-over';
+    }
+    const breathe = 1 + 0.05 * loopPhase(t, 1);
+    const r = (180 + 160 * L) * breathe;
+    const h = g.createRadialGradient(CX, CY, 0, CX, CY, r);
+    h.addColorStop(0, rgb(CREAM, 0.42 * L)); h.addColorStop(0.5, rgb(GOLD, 0.16 * L)); h.addColorStop(1, rgb(GOLD, 0));
+    g.globalCompositeOperation = 'lighter'; g.fillStyle = h; g.fillRect(CX - r, CY - r, r * 2, r * 2); g.globalCompositeOperation = 'source-over';
+  }
+
+  function motes(t) {
+    g.save(); g.globalCompositeOperation = 'lighter';
+    for (const m of MOTES) {
+      const appear = ease(seg(t, m.delay, m.delay + 0.9));
+      if (appear <= 0) continue;
+      const x = m.x + m.ax * loopPhase(t, 1, m.p1), y = m.y + m.ay * loopPhase(t, 1, m.p2 + 0.25);
+      const a = appear * (0.3 + 0.7 * (0.5 + 0.5 * loopPhase(t, m.tw, m.p3)));
+      const r = m.r * 4;
+      const d = g.createRadialGradient(x, y, 0, x, y, r);
+      d.addColorStop(0, rgb(CREAM, a)); d.addColorStop(0.35, rgb(GOLD, a * 0.5)); d.addColorStop(1, rgb(GOLD, 0));
+      g.fillStyle = d; g.fillRect(x - r, y - r, r * 2, r * 2);
+    }
+    g.restore();
+  }
+
+  // نور, written right to left by a point of light, with depth, then a shine every loop.
+  function text(t) {
+    const p = ease(seg(t, 0.8, 2.2));
+    if (p <= 0) return;
+    const rise = ease(seg(t, 0.8, 2.4));
+    const edge = box.r - (box.r - box.l) * p; // the light's position as it writes
+    g.save();
+    g.translate(CX, box.y); g.scale(1, 0.84 + 0.16 * rise); g.translate(-CX, -box.y + 16 * (1 - rise));
+    // Only while writing: once the word is whole, nothing may cut its glow off.
+    if (p < 1) { g.beginPath(); g.rect(edge, 0, W - edge, H); g.clip(); }
+
+    // Depth: darker gold layers stepping down and back.
+    const depth = 6;
+    for (let i = depth; i >= 1; i--) {
+      g.globalAlpha = 0.9;
+      g.filter = `brightness(${0.4 + 0.3 * (1 - i / depth)})`;
+      g.drawImage(word, i * 0.5, i * 0.8);
+    }
+    g.filter = 'none'; g.globalAlpha = 1;
+    g.shadowColor = rgb(CREAM, 0.55); g.shadowBlur = 38;
+    g.drawImage(word, 0, 0);
+    g.shadowBlur = 0;
+
+    // Shine: a band of light crosses the word once per loop (off the word at the loop's ends).
+    if (t >= INTRO) {
+      const k = seg(((t - INTRO) % LOOP) / LOOP, 0.2, 0.7);
+      if (k > 0 && k < 1) {
+        const x = box.l - 260 + (box.r - box.l + 520) * k;
+        const shine = document.createElement('canvas'); shine.width = W; shine.height = H;
+        const s = shine.getContext('2d');
+        s.drawImage(word, 0, 0); s.globalCompositeOperation = 'source-atop';
+        const band = s.createLinearGradient(x - 130, 0, x + 130, 0);
+        band.addColorStop(0, 'rgba(255,255,255,0)'); band.addColorStop(0.5, 'rgba(255,255,255,0.75)'); band.addColorStop(1, 'rgba(255,255,255,0)');
+        s.fillStyle = band; s.fillRect(0, 0, W, H);
+        g.globalCompositeOperation = 'lighter'; g.drawImage(shine, 0, 0); g.globalCompositeOperation = 'source-over';
+      }
+    }
+    g.restore();
+
+    // The light that writes: a bright pen at the leading edge.
+    if (p > 0 && p < 1) {
+      const a = Math.sin(Math.PI * p);
+      const y = (box.t + box.b) / 2 + 20;
+      const pen = g.createRadialGradient(edge, y, 0, edge, y, 100);
+      pen.addColorStop(0, rgb([255, 255, 255], 0.85 * a)); pen.addColorStop(0.2, rgb(CREAM, a * 0.5)); pen.addColorStop(1, rgb(GOLD, 0));
+      g.globalCompositeOperation = 'lighter'; g.fillStyle = pen; g.fillRect(edge - 100, y - 100, 200, 200); g.globalCompositeOperation = 'source-over';
+    }
+  }
+
+  function title(t) {
+    const letters = 'NOOR FRAME'.split('');
+    g.font = '600 30px Archivo';
+    g.textBaseline = 'alphabetic'; g.textAlign = 'left';
+    const spacing = 16;
+    const widths = letters.map((ch) => g.measureText(ch).width);
+    const total = widths.reduce((s, w) => s + w, 0) + spacing * (letters.length - 1);
+    let x = CX - total / 2;
+    const y = box.b + 92;
+    letters.forEach((ch, i) => {
+      const a = ease(seg(t, 1.9 + i * 0.05, 2.4 + i * 0.05));
+      if (a > 0) {
+        g.fillStyle = rgb(CREAM, 0.92 * a);
+        g.shadowColor = rgb(CREAM, 0.5 * a); g.shadowBlur = 14;
+        g.fillText(ch, x, y + 14 * (1 - a));
+        g.shadowBlur = 0;
+      }
+      x += widths[i] + spacing;
+    });
+    // A fine line of light under the name.
+    const lw = ease(seg(t, 2.1, 2.8)) * 220;
+    if (lw > 0) {
+      const ly = y + 26, lg = g.createLinearGradient(CX - lw, 0, CX + lw, 0);
+      lg.addColorStop(0, rgb(GOLD, 0)); lg.addColorStop(0.5, rgb(CREAM, 0.7)); lg.addColorStop(1, rgb(GOLD, 0));
+      g.fillStyle = lg; g.fillRect(CX - lw, ly, lw * 2, 2);
+    }
+  }
+
+  // A fixed, fine grain over everything, so the dark greens don't show steps (8-bit banding).
+  const grain = document.createElement('canvas'); grain.width = W; grain.height = H;
+  (() => {
+    const gg = grain.getContext('2d'), img = gg.createImageData(W, H);
+    for (let i = 0; i < img.data.length; i += 4) {
+      const v = rnd() < 0.5 ? 0 : 255;
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = Math.floor(rnd() * 9);
+    }
+    gg.putImageData(img, 0, 0);
+  })();
+
+  function vignette() {
+    const v = g.createRadialGradient(CX, CY, 380, CX, CY, 860);
+    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.45)');
+    g.fillStyle = v; g.fillRect(0, 0, W, H);
+  }
+
+  window.render = (t) => {
+    if (!box) drawWord();
+    const L = ease(seg(t, 0, 1.6)); // how much light has reached the room
+    g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.filter = 'none';
+    background(t, L);
+    rays(t, L);
+    wave(t);
+    glow(t, L);
+    motes(t);
+    text(t);
+    title(t);
+    vignette();
+    g.drawImage(grain, 0, 0);
+  };
+  window.ANIMATION = { W, H, FPS, INTRO, LOOP };
+
+  // Open this file in a browser to watch it: intro once, then the loop.
+  // Load both fonts before the first frame: a canvas only asks for a font once it draws with it,
+  // and would draw that first frame in a fallback font.
+  Promise.all([document.fonts.load('700 300px Amiri', 'نور'), document.fonts.load('600 30px Archivo', 'NOOR FRAME')]).then(() => {
+    window.fontsReady = true;
+    if (new URLSearchParams(location.search).has('record')) return;
+    const start = performance.now();
+    const tick = (now) => {
+      let t = (now - start) / 1000;
+      if (t > INTRO) t = INTRO + ((t - INTRO) % LOOP);
+      render(t); requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "@noor-frame/companion",
+  "version": "0.1.0",
+  "description": "The phone app for noor-frame: household settings, calendars, integrations and devices.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@noor-frame/prayer-aladhan": "*",
+    "@noor-frame/core": "*"
+  },
+  "devDependencies": {
+    "vite": "^8.3.1"
+  }
+}

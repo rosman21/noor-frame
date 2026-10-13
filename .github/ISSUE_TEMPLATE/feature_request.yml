@@ -1,0 +1,15 @@
+name: Feature or integration idea
+description: Suggest a feature, an integration or an improvement.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would it help your household do?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How might it work?
+      description: For a new data source, link its API and terms of use, and say whether it needs a key.

@@ -1,0 +1,69 @@
+/* Prayer — next prayer hero on the left, the day's times + athan controls on the right. */
+.pr { height: 100%; display: grid; grid-template-columns: 460px 1fr; gap: 24px; }
+.pr-left { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+.pr-left .pr-hero { flex: 1; }
+.pr--empty > .back-btn { position: absolute; top: var(--pad); left: var(--pad); }
+.pr--empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; }
+.pr-empty { font-size: 52px; line-height: 1.05; text-align: center; }
+
+.pr-hero {
+  background: var(--prayer); color: #fff;
+  border-radius: var(--r); padding: 28px 30px;
+  display: flex; flex-direction: column; overflow: hidden; position: relative;
+}
+.pr-hero-ar { font-family: var(--arabic); font-size: 96px; line-height: 1.2; margin-top: 28px; text-align: right; opacity: .92; }
+.pr-hero-name { font-size: 104px; line-height: .9; margin-top: 4px; }
+.pr-hero-time { font-size: 150px; line-height: .8; letter-spacing: -.035em; margin-top: auto; display: flex; align-items: flex-start; }
+.pr-hero-time small { font-size: 24px; letter-spacing: .08em; margin: 8px 0 0 12px; text-transform: uppercase; }
+.pr-hero-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 22px; padding-top: 14px; border-top: 2px solid rgba(255, 255, 255, .3); }
+.pr-hero-foot .serif { font-size: 22px; }
+.pr-hero-arh { font-family: var(--arabic); font-size: 22px; opacity: .85; }
+
+.pr-side { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+.pr-list { flex: 1; display: flex; flex-direction: column; border-top: 3px solid var(--ink); }
+.pr-row {
+  flex: 1; display: grid; grid-template-columns: 1fr 140px 190px 72px; align-items: center; gap: 12px;
+  border-bottom: 1px solid var(--line); padding: 0 6px 0 4px;
+}
+.pr-row-n { display: flex; align-items: center; gap: 10px; }
+.pr-row-n b { font-size: 30px; font-weight: 800; font-stretch: 75%; letter-spacing: .03em; text-transform: uppercase; }
+.pr-row-n em { font-style: normal; font-size: 13px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; background: var(--prayer); color: #fff; border-radius: 999px; padding: 4px 10px 3px; }
+.pr-row-ar { font-family: var(--arabic); font-size: 28px; color: var(--ink-2); text-align: right; }
+.pr-row-t { font-size: 54px; line-height: 1; text-align: right; }
+.pr-row-t small { font-size: 16px; letter-spacing: .08em; margin-left: 6px; }
+.pr-row.is-past { color: var(--mute); }
+.pr-row.is-past .pr-row-ar { color: var(--mute); }
+.pr-row.is-sun { color: var(--mute); }
+.pr-row.is-sun .pr-row-t { font-size: 38px; }
+.pr-row.is-sun .pr-row-n b { font-size: 22px; }
+.pr-row.is-next { background: rgb(var(--prayer-rgb) / .12); border-radius: var(--r-s); border-bottom-color: transparent; }
+.pr-row.is-next .pr-row-t, .pr-row.is-next .pr-row-n b { color: var(--prayer); }
+
+.pr-bell { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--line); color: var(--mute); justify-self: end; }
+.pr-bell.is-on { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.pr-bell:active { transform: scale(.92); }
+.pr-bell--none { border: 0; }
+
+.pr-controls { display: flex; align-items: center; gap: 12px; }
+.pr-controls .btn { white-space: nowrap; padding: 0 22px; }
+.pr-controls .seg button { padding: 0 18px; }
+.pr-controls .btn--solid { margin-left: auto; }
+.pr-controls .is-muted { border-color: var(--alert); color: var(--alert); }
+.pr-meta { justify-content: flex-end; }
+
+/* ---- ayah sheet (opened from the home tile) */
+.sheet--ayah { background: var(--prayer); color: #fff; }
+.sheet--ayah .sheet-x { color: #fff; }
+.ays { padding: 36px 40px 32px; display: flex; flex-direction: column; gap: 22px; }
+.ays-ar { font-family: var(--quran); font-size: 44px; line-height: 1.8; text-align: right; }
+.ays-tr { font-size: 30px; line-height: 1.3; }
+.ays-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.ays-play { border-color: #fff; background: #fff; color: var(--prayer); }
+
+/* ---- athan takeover */
+.takeover--athan { background: var(--prayer); color: #fff; }
+.tk-athan { position: absolute; left: 64px; right: 64px; top: 56px; bottom: 56px; display: flex; flex-direction: column; justify-content: flex-end; }
+.tk-athan-ar { position: absolute; top: 0; right: 0; font-family: var(--arabic); font-size: 190px; line-height: 1.3; opacity: .9; }
+.tk-athan-name { font-size: 210px; line-height: .86; margin: 10px 0 30px; }
+.tk-athan-sub { font-size: 32px; opacity: .85; margin-bottom: 36px; }
+.tk-athan .tk-btn--solid { color: var(--prayer); }

@@ -1,0 +1,28 @@
+{
+  "name": "@noor-frame/server",
+  "version": "0.1.0",
+  "description": "noor-frame's server: serves the dashboard and the integration APIs (Node or Cloudflare).",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/handler.js"
+  },
+  "scripts": {
+    "start": "node src/node.js",
+    "dev": "node --watch src/node.js",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@noor-frame/core": "*",
+    "@noor-frame/prayer-aladhan": "*",
+    "@noor-frame/weather-open-meteo": "*",
+    "@noor-frame/quran-alquran-cloud": "*",
+    "@noor-frame/calendar-ics": "*",
+    "@noor-frame/travel": "*",
+    "@noor-frame/ai-claude": "*"
+  },
+  "devDependencies": {
+    "wrangler": "^4.145.0"
+  }
+}

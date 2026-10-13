@@ -1,0 +1,10 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<!-- /etc/avahi/services/noor-frame.service: lets screens find this server by themselves. -->
+<service-group>
+  <name replace-wildcards="yes">noor-frame on %h</name>
+  <service>
+    <type>_noor-frame._tcp</type>
+    <port>8787</port>
+  </service>
+</service-group>

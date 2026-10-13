@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.noor.frame">
+  <uses-permission android:name="android.permission.INTERNET" />
+  <!-- Noor's own Wi-Fi setup page: list, join and check networks. Android 6 lists nearby
+       networks only to apps with location access. -->
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+  <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+  <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+  <application android:label="Noor Frame" android:theme="@android:style/Theme.Material.NoActionBar" android:hardwareAccelerated="true" android:usesCleartextTraffic="true">
+    <!-- Noor is always horizontal: the dashboard is laid out for a landscape frame or TV. -->
+    <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop" android:screenOrientation="landscape" android:configChanges="orientation|screenSize|keyboardHidden">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.HOME" />
+        <category android:name="android.intent.category.DEFAULT" />
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <data android:scheme="http" />
+        <data android:scheme="https" />
+      </intent-filter>
+    </activity>
+  </application>
+</manifest>

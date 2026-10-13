@@ -1,0 +1,13 @@
+{
+  "name": "@noor-frame/weather-open-meteo",
+  "version": "0.1.0",
+  "description": "Weather from Open-Meteo.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "@noor-frame/core": "*"
+  }
+}

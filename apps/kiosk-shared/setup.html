@@ -1,0 +1,376 @@
+<!doctype html>
+<!--
+  Noor's own Wi-Fi setup screen, shared by the screens that run Noor full time. It works with no
+  network and no server, because each device keeps its own copy:
+    - Android frames: bundled into the app (apps/kiosk-android). window.Frame is the app's bridge.
+    - Raspberry Pi screens: served by the kiosk helper at /kiosk/setup (apps/kiosk-pi), which
+      answers the same questions over /kiosk/wifi/*.
+  It opens from the dashboard's Settings → Wi-Fi, and on its own when the dashboard can't load.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wi-Fi</title>
+<style>
+  :root {
+    --bg: #141311; --card: #1f1d1a; --card-hi: #2a2723; --line: #34302b;
+    --ink: #eee8dd; --dim: #a39c90; --accent: #14906b; --accent-ink: #fff; --warn: #e8a33d; --bad: #e5635b;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--ink); }
+  body { font: 20px/1.35 Roboto, sans-serif; padding: 28px 40px 32px; overflow-y: auto; -webkit-tap-highlight-color: transparent; }
+  .serif { font-family: "Noto Serif", Georgia, serif; }
+  header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding-bottom: 18px; border-bottom: 3px solid var(--ink); }
+  h1 { font-size: 64px; line-height: 1; font-weight: 700; letter-spacing: -1px; }
+  #status { margin-top: 10px; font-size: 24px; color: var(--dim); font-style: italic; }
+  #status b { color: var(--ink); font-style: normal; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  .btn { min-height: 64px; padding: 0 28px; white-space: nowrap; border-radius: 32px; font-size: 22px; font-weight: 700; background: var(--card-hi); }
+  .btn.solid { background: var(--accent); color: var(--accent-ink); }
+  .btn:active { opacity: .7; }
+  #notice { display: none; margin-top: 22px; padding: 20px 24px; border-radius: 18px; background: var(--card); border-left: 6px solid var(--warn); }
+  #notice.show { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+  #notice.bad { border-left-color: var(--bad); }
+  #notice.good { border-left-color: var(--accent); }
+  #notice p { font-size: 22px; }
+  #notice small { display: block; margin-top: 4px; color: var(--dim); font-size: 18px; }
+  .label { margin: 28px 0 12px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 700; letter-spacing: 2px; color: var(--dim); text-transform: uppercase; }
+  .label button { font-size: 16px; letter-spacing: 2px; font-weight: 700; color: var(--dim); text-transform: uppercase; padding: 8px 0 8px 16px; }
+  #list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .net { display: flex; align-items: center; gap: 18px; min-height: 84px; padding: 0 22px; border-radius: 18px; background: var(--card); text-align: left; }
+  .net:active { background: var(--card-hi); }
+  .net.on { background: var(--accent); color: var(--accent-ink); }
+  .net .name { flex: 1; font-size: 24px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .net .meta { font-size: 17px; color: var(--dim); }
+  .net.on .meta { color: var(--accent-ink); }
+  .bars { display: flex; align-items: flex-end; gap: 3px; height: 26px; }
+  .bars i { width: 6px; border-radius: 2px; background: currentColor; opacity: .25; }
+  .bars i:nth-child(1) { height: 25%; } .bars i:nth-child(2) { height: 50%; } .bars i:nth-child(3) { height: 75%; } .bars i:nth-child(4) { height: 100%; }
+  .bars i.lit { opacity: 1; }
+  .lock { width: 20px; height: 20px; opacity: .8; }
+  #empty { grid-column: 1 / -1; padding: 28px; border-radius: 18px; background: var(--card); color: var(--dim); font-style: italic; font-size: 22px; }
+  #phone { margin-top: 16px; }
+  #server { display: flex; align-items: center; gap: 18px; min-height: 84px; padding: 0 22px; border-radius: 18px; background: var(--card); }
+  #server .url { flex: 1; font-size: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* The password sheet sits at the top, so the on-screen keyboard never covers it. */
+  #scrim { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; }
+  #sheet { position: fixed; left: 50%; top: 24px; width: 760px; max-width: calc(100% - 32px); transform: translateX(-50%); padding: 28px 32px; border-radius: 24px; background: var(--card-hi); box-shadow: 0 20px 60px rgba(0,0,0,.5); display: none; }
+  .open #scrim, .open #sheet { display: block; }
+  #sheet h2 { font-size: 34px; }
+  #sheet p { margin-top: 6px; color: var(--dim); }
+  .field { display: flex; gap: 12px; margin-top: 20px; }
+  input { flex: 1; min-height: 68px; padding: 0 22px; border-radius: 16px; border: 2px solid var(--line); background: var(--bg); color: var(--ink); font: 26px Roboto, sans-serif; outline: none; }
+  input:focus { border-color: var(--accent); }
+  .row { display: flex; justify-content: flex-end; gap: 12px; margin-top: 22px; }
+  /* Noor's own keyboard, so Android's never appears. */
+  #kb { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px 16px; background: #0c0b0a; display: none; }
+  .open #kb { display: block; }
+  .kr { display: flex; justify-content: center; gap: 8px; margin-top: 8px; }
+  .kr:first-child { margin-top: 0; }
+  .k { flex: 0 0 104px; height: 70px; border-radius: 12px; background: var(--card-hi); font-size: 28px; }
+  .k:active { background: var(--line); }
+  .k.wide { flex-basis: 160px; font-size: 20px; font-weight: 700; }
+  .k.space { flex-basis: 520px; }
+  .k.on { background: var(--ink); color: var(--bg); }
+  .k.go { background: var(--accent); color: var(--accent-ink); }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1 class="serif">Wi-Fi</h1>
+    <div id="status" class="serif">Checking…</div>
+  </div>
+  <button class="btn" id="back" hidden>Back to Noor</button>
+</header>
+
+<div id="notice"><div><p id="noticeText"></p><small id="noticeSub"></small></div><button class="btn solid" id="noticeBtn" hidden>Try again</button></div>
+
+<div class="label"><span>Networks</span><button id="rescan">Refresh</button></div>
+<div id="list"><div id="empty" class="serif">Looking for networks…</div></div>
+
+<button class="btn" id="phone" hidden>Use your phone instead</button>
+
+<div class="label"><span>Noor server</span></div>
+<div id="server"><span class="url" id="serverUrl"></span><button class="btn" id="serverEdit">Change</button></div>
+
+<div id="scrim"></div>
+<form id="sheet" autocomplete="off">
+  <h2 class="serif" id="sheetTitle"></h2>
+  <p id="sheetSub"></p>
+  <div class="field">
+    <input id="sheetInput" readonly inputmode="none" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <button type="button" class="btn" id="show">Show</button>
+  </div>
+  <div class="row">
+    <button type="button" class="btn" id="cancel">Cancel</button>
+    <button type="submit" class="btn solid" id="ok"></button>
+  </div>
+</form>
+<div id="kb"></div>
+
+<script>
+  // The device's bridge, the same shape everywhere; every answer is a promise.
+  var B = window.Frame && window.Frame.status ? androidBridge(window.Frame) : piBridge();
+  function androidBridge(F) {
+    var json = function (x) { return Promise.resolve(JSON.parse(x)); };
+    return {
+      reason: F.setupReason(),
+      status: function () { return json(F.status()); },
+      networks: function () { return json(F.networks()); },
+      scan: function () { F.scan(); return Promise.resolve(); },
+      connect: function (ssid, password, security) { return Promise.resolve(F.connect(ssid, password, security)); },
+      serverUrl: function () { return Promise.resolve(F.serverUrl()); },
+      setServerUrl: function (url) { return Promise.resolve(F.setServerUrl(url)); },
+      openDashboard: function () { F.openDashboard(); },
+      phoneSetup: null,
+    };
+  }
+  function piBridge() {
+    var get = function (p) { return fetch('/kiosk/' + p, { cache: 'no-store' }).then(function (r) { return r.json(); }); };
+    var post = function (p, b) {
+      return fetch('/kiosk/' + p, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(b || {}) })
+        .then(function (r) { return r.json(); });
+    };
+    return {
+      reason: new URLSearchParams(location.search).get('reason') || 'settings',
+      status: function () { return get('wifi/status'); },
+      networks: function () { return get('wifi/networks'); },
+      scan: function () { return post('wifi/scan'); },
+      connect: function (ssid, password) { return post('wifi/join', { ssid: ssid, password: password }).then(function (r) { return !!r.ok; }); },
+      serverUrl: function () { return get('status').then(function (st) { return st.server || ''; }); },
+      setServerUrl: function (url) { return post('server', { url: url }).then(function (r) { return !!r.ok; }); },
+      openDashboard: function () { location.href = '/?kiosk=pi'; },
+      // No keyboard handy (a TV): set up Wi-Fi from a phone through the Pi's own setup network.
+      phoneSetup: function () { return post('hotspot', { on: true }).then(function () { location.href = '/kiosk/connecting'; }); },
+    };
+  }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var reason = B.reason;              // 'offline' or 'settings'
+  var joining = null;                 // { ssid, since } while joining a network
+  var sheet = null;                   // { kind: 'password' | 'server', net }
+  var lastTouch = Date.now();
+  var lastStatus = {};
+  var server = '';                    // the Noor server's address
+
+  function notice(text, sub, tone, action) {
+    $('notice').className = 'show ' + (tone || '');
+    $('noticeText').textContent = text;
+    $('noticeSub').textContent = sub || '';
+    $('noticeBtn').hidden = !action;
+  }
+
+  function showOffline() {
+    var s = lastStatus;
+    if (!s.connected) {
+      notice('Connect to Wi-Fi to load Noor.', 'Choose your home network below.', 'bad');
+    } else {
+      notice('Noor can’t reach its server.',
+        'On Wi-Fi (' + s.ssid + '), but nothing answered at ' + (server || 'the server') + '. Check the server is on, or change its address below.',
+        'bad', true);
+    }
+  }
+
+  function render(nets) {
+    var list = $('list');
+    list.textContent = '';
+    nets.sort(function (a, b) {
+      var ca = a.ssid === lastStatus.ssid && lastStatus.connected, cb = b.ssid === lastStatus.ssid && lastStatus.connected;
+      return (cb - ca) || (b.saved - a.saved) || (b.bars - a.bars) || a.ssid.localeCompare(b.ssid);
+    });
+    if (!nets.length) {
+      var e = document.createElement('div');
+      e.id = 'empty'; e.className = 'serif';
+      e.textContent = 'Looking for networks…';
+      list.appendChild(e);
+      return;
+    }
+    nets.forEach(function (n) {
+      var on = lastStatus.connected && n.ssid === lastStatus.ssid;
+      var b = document.createElement('button');
+      b.className = 'net' + (on ? ' on' : '');
+      var bars = '<span class="bars">' + [0, 1, 2, 3].map(function (i) { return '<i class="' + (i <= n.bars ? 'lit' : '') + '"></i>'; }).join('') + '</span>';
+      var lock = n.security === 'open' ? '' : '<svg class="lock" viewBox="0 0 24 24" fill="currentColor"><path d="M6 10V8a6 6 0 1 1 12 0v2h1a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V11a1 1 0 0 1 1-1h1zm2 0h8V8a4 4 0 1 0-8 0v2z"/></svg>';
+      b.innerHTML = bars + '<span class="name"></span><span class="meta"></span>' + lock;
+      b.querySelector('.name').textContent = n.ssid;
+      b.querySelector('.meta').textContent = on ? 'Connected' : n.saved ? 'Saved' : n.security === 'other' ? 'Not supported' : '';
+      b.onclick = function () { choose(n, on); };
+      list.appendChild(b);
+    });
+  }
+
+  function choose(n, on) {
+    if (on) return;
+    if (n.security === 'other') {
+      notice('Noor can’t join ' + n.ssid + '.', 'Enterprise and WEP networks aren’t supported. Choose a network that uses a password (WPA) or none.', 'bad');
+      return;
+    }
+    if (n.security === 'open' || n.saved) { join(n, ''); return; }
+    openSheet({ kind: 'password', net: n });
+  }
+
+  function join(n, password) {
+    B.connect(n.ssid, password, n.security).then(function (ok) {
+      if (!ok) { notice('Couldn’t join ' + n.ssid + '.', 'Try again, or check the password.', 'bad'); return; }
+      joining = { net: n, since: Date.now() };
+      notice('Joining ' + n.ssid + '…', 'This can take up to half a minute.', '');
+    });
+  }
+
+  function openSheet(s) {
+    sheet = s;
+    var input = $('sheetInput');
+    if (s.kind === 'password') {
+      $('sheetTitle').textContent = 'Join ' + s.net.ssid;
+      $('sheetSub').textContent = 'Type the Wi-Fi password.';
+      $('ok').textContent = 'Join';
+      input.type = 'password'; input.value = '';
+      $('show').hidden = false; $('show').textContent = 'Show';
+    } else {
+      $('sheetTitle').textContent = 'Noor server';
+      $('sheetSub').textContent = 'The address of the computer running Noor, for example 192.168.1.20:8787.';
+      $('ok').textContent = 'Save';
+      input.type = 'url'; input.value = server;
+      $('show').hidden = true;
+    }
+    kb.page = 'abc'; kb.shift = false; drawKeys();
+    document.body.classList.add('open');
+  }
+
+  function closeSheet() {
+    sheet = null;
+    document.body.classList.remove('open');
+  }
+
+  $('sheet').onsubmit = function (e) {
+    e.preventDefault();
+    var value = $('sheetInput').value, s = sheet;
+    if (!s) return;
+    if (s.kind === 'password') {
+      if (value.length < 8) { $('sheetSub').textContent = 'Wi-Fi passwords have at least 8 characters.'; return; }
+      closeSheet();
+      join(s.net, value);
+    } else {
+      B.setServerUrl(value).then(function (ok) {
+        if (!ok) { $('sheetSub').textContent = 'That doesn’t look like an address. Try something like 192.168.1.20:8787.'; return; }
+        closeSheet();
+        return B.serverUrl().then(function (url) {
+          server = url; $('serverUrl').textContent = url;
+          notice('Opening Noor…', url, 'good');
+          B.openDashboard();
+        });
+      });
+    }
+  };
+  $('cancel').onclick = closeSheet;
+  $('scrim').onclick = closeSheet;
+  $('show').onclick = function () {
+    var i = $('sheetInput');
+    i.type = i.type === 'password' ? 'text' : 'password';
+    $('show').textContent = i.type === 'password' ? 'Show' : 'Hide';
+  };
+  $('back').onclick = function () { B.openDashboard(); };
+  $('noticeBtn').onclick = function () { notice('Opening Noor…', server, 'good'); B.openDashboard(); };
+  if (B.phoneSetup) { $('phone').hidden = false; $('phone').onclick = function () { B.phoneSetup(); }; }
+  $('serverEdit').onclick = function () { openSheet({ kind: 'server' }); };
+  $('rescan').onclick = function () { B.scan(); setTimeout(refreshList, 3000); };
+  document.addEventListener('pointerdown', function () { lastTouch = Date.now(); }, true);
+  document.addEventListener('keydown', function () { lastTouch = Date.now(); }, true);
+
+  // ------------------------------------------------ keyboard
+  // Three pages cover every printable character a Wi-Fi password can use.
+  var kb = { page: 'abc', shift: false };
+  var PAGES = {
+    abc: ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'],
+    num: ['1234567890', '-/:;()$&@"', ".,?!'"],
+    sym: ['[]{}#%^*+=', '_\\|~<>`', ".,?!'"],
+  };
+  function key(label, cls, fn) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'k ' + (cls || ''); b.textContent = label;
+    b.onpointerdown = function (e) { e.preventDefault(); fn(); };
+    return b;
+  }
+  function type(ch) {
+    var i = $('sheetInput');
+    i.value += ch;
+    if (kb.shift && kb.page === 'abc') { kb.shift = false; drawKeys(); }
+  }
+  function drawKeys() {
+    var el = $('kb'), rows = PAGES[kb.page];
+    el.textContent = '';
+    rows.forEach(function (chars, r) {
+      var row = document.createElement('div');
+      row.className = 'kr';
+      if (r === 2) {
+        if (kb.page === 'abc') row.appendChild(key('⇧', 'wide' + (kb.shift ? ' on' : ''), function () { kb.shift = !kb.shift; drawKeys(); }));
+        else row.appendChild(key(kb.page === 'num' ? '#+=' : '123', 'wide', function () { kb.page = kb.page === 'num' ? 'sym' : 'num'; drawKeys(); }));
+      }
+      chars.split('').forEach(function (c) {
+        var ch = kb.page === 'abc' && kb.shift ? c.toUpperCase() : c;
+        row.appendChild(key(ch, '', function () { type(ch); }));
+      });
+      if (r === 2) row.appendChild(key('⌫', 'wide', function () { var i = $('sheetInput'); i.value = i.value.slice(0, -1); }));
+      el.appendChild(row);
+    });
+    var last = document.createElement('div');
+    last.className = 'kr';
+    last.appendChild(key(kb.page === 'abc' ? '123' : 'ABC', 'wide', function () { kb.page = kb.page === 'abc' ? 'num' : 'abc'; drawKeys(); }));
+    last.appendChild(key('space', 'space', function () { type(' '); }));
+    last.appendChild(key($('ok').textContent, 'wide go', function () { $('sheet').requestSubmit(); }));
+    el.appendChild(last);
+  }
+
+  function refreshList() {
+    B.networks().then(render, function () { /* keep the last list */ });
+  }
+
+  function tick() {
+    B.status().then(update, function () { /* the helper is restarting */ });
+  }
+  function update(s) {
+    lastStatus = s;
+    var st = $('status');
+    if (s.connected) st.innerHTML = 'Connected to <b></b> · ' + s.ip;
+    else if (!s.wifiOn) st.textContent = 'Wi-Fi is off. Choose a network to turn it on.';
+    else st.textContent = s.connecting ? 'Connecting…' : 'Not connected';
+    if (s.connected) st.querySelector('b').textContent = s.ssid;
+    $('back').hidden = !s.connected;
+
+    if (joining) {
+      var j = joining;
+      if (s.authFailed === j.net.ssid) {
+        joining = null;
+        notice('Wrong password for ' + j.net.ssid + '.', 'Try typing it again.', 'bad');
+        openSheet({ kind: 'password', net: j.net });
+      } else if (s.connected && s.ssid === j.net.ssid) {
+        joining = null;
+        notice('Connected to ' + j.net.ssid + '.', 'Opening Noor…', 'good');
+        setTimeout(function () { B.openDashboard(); }, 1500);
+      } else if (Date.now() - j.since > 30000) {
+        joining = null;
+        notice('Couldn’t join ' + j.net.ssid + '.', 'Check the password, or move the frame closer to the router.', 'bad');
+      }
+    } else if (reason === 'offline' && !sheet) {
+      showOffline();
+      // Back online and nobody is using this screen: try the dashboard again.
+      if (s.connected && Date.now() - lastTouch > 30000 && Date.now() - (window.lastTry || 0) > 30000) {
+        window.lastTry = Date.now();
+        B.openDashboard();
+      }
+    }
+  }
+
+  B.serverUrl().then(function (url) { server = url; $('serverUrl').textContent = url; });
+  tick();
+  if (reason === 'offline') { showOffline(); window.lastTry = Date.now(); }
+  B.scan();
+  refreshList();
+  setInterval(tick, 1500);
+  setInterval(refreshList, 5000);
+  setInterval(function () { if (!sheet && !joining) B.scan(); }, 20000);
+</script>
+</body>
+</html>

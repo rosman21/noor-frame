@@ -1,0 +1,130 @@
+/* Settings — three columns of cards; every row opens a tap-through list (no keyboard). */
+.set { height: 100%; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+.set-col { display: flex; flex-direction: column; gap: 18px; min-height: 0; }
+
+.set-loc {
+  background: var(--prayer); color: #fff; border-radius: var(--r); padding: 24px 24px 22px;
+  display: flex; flex-direction: column; flex: 1;
+}
+.set-place { font-size: 64px; line-height: .95; margin-top: auto; }
+.set-region { font-size: 20px; opacity: .85; margin-top: 6px; }
+.set-why { font-size: 16px; line-height: 1.35; opacity: .8; margin: 14px 0 18px; }
+.set-loc-btns { display: flex; gap: 10px; }
+.set-loc-btns .btn { flex: 1; padding: 0 14px; white-space: nowrap; }
+.set-btn-light { background: #fff; color: var(--prayer); border-color: #fff; }
+.set-btn-ghost { color: #fff; border-color: rgba(255, 255, 255, .6); }
+
+.set-card { background: var(--card); border-radius: var(--r); padding: 18px 20px 6px; display: flex; flex-direction: column; }
+.set-card > .label { margin-bottom: 4px; }
+.set-row {
+  display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; align-items: center; column-gap: 10px;
+  min-height: var(--tap); padding: 10px 0; border-top: 1px solid var(--line); width: 100%;
+}
+.set-row:first-of-type { border-top: 0; }
+.set-row:active { background: var(--paper-2); }
+.set-l { grid-column: 1; font-size: var(--fs-min); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--mute); }
+.set-v { grid-column: 1; display: flex; flex-direction: column; min-width: 0; }
+.set-v b { font-size: 20px; font-weight: 700; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.set-v small { font-size: 15px; color: var(--mute); }
+.set-row > .i { grid-column: 2; grid-row: 1 / span 2; color: var(--mute); }
+.set-note { font-size: 19px; line-height: 1.4; color: var(--ink-2); }
+
+/* ---- picker sheet */
+.sheet--pick { width: 620px; }
+.pk { display: flex; flex-direction: column; max-height: 680px; }
+.pk-head { display: flex; align-items: center; gap: 14px; padding: 28px 90px 16px 32px; border-bottom: 2px solid var(--ink); }
+.pk-head h2 { font-size: 44px; line-height: 1; }
+.pk-list { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 6px 0 14px; }
+.pk-group { padding: 16px 32px 6px; }
+.pk-row { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 72px; padding: 10px 32px; border-bottom: 1px solid var(--line); }
+.pk-row:active { background: var(--paper-2); }
+.pk-text { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.pk-text b { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.pk-text small { font-size: 16px; color: var(--mute); margin-top: 2px; }
+.pk-row em { font-style: normal; font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; background: var(--prayer); color: #fff; border-radius: 999px; padding: 5px 10px 4px; white-space: nowrap; }
+.pk-row.is-on { color: var(--prayer); }
+.pk-row.is-on .pk-text b { font-weight: 800; }
+.pk-row > .i { color: var(--mute); }
+.pk-row.is-on > .i { color: var(--prayer); }
+
+/* ---- Arabic or Urdu interface: prayer names are already in Arabic script, so hide the second copy */
+html[lang="ar"] .pr-row-ar, html[lang="ar"] .ps-ar, html[lang="ar"] .pn-ar, html[lang="ar"] .pr-hero-ar, html[lang="ar"] .pr-hero-arh, html[lang="ar"] .tk-athan-ar,
+html[lang="ur"] .pr-row-ar, html[lang="ur"] .ps-ar, html[lang="ur"] .pn-ar, html[lang="ur"] .pr-hero-ar, html[lang="ur"] .pr-hero-arh, html[lang="ur"] .tk-athan-ar { display: none; }
+
+/* ---- Arabic-script interface: lay out each line by its own text direction, so mixed
+   Arabic + numbers ("مطر حتى 21:00") reads in the right order; keep the left-aligned layout. */
+.is-rtl-lang .h-wx-say, .is-rtl-lang .h-hero-meta, .is-rtl-lang .pn-hijri, .is-rtl-lang .pr-hero-foot .serif,
+.is-rtl-lang .set-why, .is-rtl-lang .h-free, .is-rtl-lang .trip-meta, .is-rtl-lang .banner-text span, .is-rtl-lang .amb-date i {
+  unicode-bidi: plaintext; text-align: left;
+}
+
+/* ---- Arabic-script interface: no letter-spacing or capitals (they break joined letters) */
+.is-rtl-lang .label, .is-rtl-lang .label *, .is-rtl-lang [class*="-l"], .is-rtl-lang b, .is-rtl-lang button, .is-rtl-lang small, .is-rtl-lang em, .is-rtl-lang span {
+  letter-spacing: 0 !important; text-transform: none !important;
+}
+
+/* ---- calendars card + manager */
+.set-cals .set-cal-dots { flex-direction: row; align-items: center; gap: 4px; }
+.set-cal-dots i { flex: none; width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 0 1px var(--line); }
+.set-cal-dots b { margin-left: 6px; min-width: 0; }
+.set-add-cal { margin: 8px 0 14px; }
+.set-vol-n { margin-left: auto; color: var(--ink); }
+.set-vol { display: flex; align-items: center; gap: 12px; padding: 8px 0 14px; }
+.set-vol-btn { flex: none; width: var(--tap); height: var(--tap); border-radius: 999px; display: grid; place-items: center; background: var(--paper-2); }
+.set-vol-btn:active { transform: scale(.94); }
+.set-vol-bars { flex: 1; display: flex; align-items: flex-end; gap: 6px; height: 44px; }
+.set-vol-bar { flex: 1; border-radius: 6px; background: var(--line); }
+.set-vol-bar.is-on { background: var(--prayer); }
+.pk-dot { flex: none; width: 22px; height: 22px; border-radius: 50%; box-shadow: 0 0 0 1px var(--line); }
+.pk-row.is-dim .pk-text, .pk-row.is-dim .pk-dot { opacity: .45; }
+
+/* ---- "scan with your phone" sheet */
+.add-cal { display: flex; gap: 36px; align-items: center; padding: 40px 44px 40px 40px; }
+.add-cal-qr { flex: none; width: 300px; height: 300px; background: #fff; border-radius: 22px; padding: 22px; box-shadow: inset 0 0 0 2px var(--line); }
+.add-cal-qr svg { width: 100%; height: 100%; display: block; }
+.add-cal-text { flex: 1; min-width: 0; padding-right: 30px; }
+.add-cal-text h2 { font-size: 56px; line-height: 1; margin: 6px 0 16px; }
+.add-cal-text ol { margin: 0; padding-left: 22px; font-size: 19px; line-height: 1.4; color: var(--ink-2); }
+.add-cal-text li { margin-bottom: 6px; }
+.add-cal-url { font-size: 14px; color: var(--mute); margin-top: 12px; word-break: break-all; }
+.add-cal-status { margin-top: 18px; min-height: 52px; display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 19px; font-weight: 700; color: var(--mute); }
+.add-cal-status .pulse { animation: pulse 1.4s ease-in-out infinite; }
+.add-cal-status.is-done { color: var(--prayer); }
+.add-cal-status.is-done small { flex-basis: 100%; font-weight: 400; color: var(--mute); font-size: 16px; }
+.add-cal-status.is-expired .btn { min-height: 48px; }
+@keyframes pulse { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+
+/* Household settings (shared by every screen) are marked with a small house. */
+.set-house { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; vertical-align: -2px; color: var(--mute); font-style: normal; }
+.set-loc .set-house { margin-left: auto; color: inherit; opacity: .85; font-size: 12px; letter-spacing: .08em; }
+.set-row--info { cursor: default; }
+.set-row--info:active { background: none; }
+
+/* ---- town or ZIP search: the sheet sits at the top, Noor's keyboard along the bottom */
+.sheet--search { width: 900px; top: 18px; max-height: 440px; overflow: hidden; display: flex; flex-direction: column; transform: translate(-50%, 6px) scale(.97); }
+.sheet-layer.is-open .sheet--search { transform: translate(-50%, 0); }
+.sheet--search.is-kb-off { max-height: 764px; }
+.loc-search { display: flex; flex-direction: column; min-height: 0; padding: 26px 32px 0; }
+.loc-search h2 { font-size: 40px; line-height: 1; margin: 4px 0 14px; }
+.loc-field {
+  display: flex; align-items: center; min-height: 68px; padding: 0 22px; margin-right: 58px;
+  border: 2px solid var(--prayer); border-radius: 16px; background: var(--paper-2); font-size: 28px; font-weight: 700;
+}
+.loc-q.is-empty { color: var(--mute); font-weight: 400; }
+.loc-caret { width: 3px; height: 34px; margin-left: 3px; background: var(--prayer); animation: loc-blink 1s steps(1) infinite; }
+.loc-q.is-empty + .loc-caret { order: -1; margin: 0 3px 0 0; }
+@keyframes loc-blink { 50% { opacity: 0; } }
+.loc-results { overflow-y: auto; -webkit-overflow-scrolling: touch; margin: 10px -32px 0; padding-bottom: 10px; min-height: 0; }
+.loc-results.is-busy { opacity: .5; }
+.loc-results .pk-row { min-height: 66px; }
+.loc-hint { padding: 12px 32px 4px; font-size: 19px; line-height: 1.4; color: var(--ink-2); }
+.loc-list { margin: 8px 32px 6px; }
+.loc-kb { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px 14px; background: #0c0b0a; }
+.loc-kb.is-hidden { display: none; }
+.loc-kb .kr { display: flex; justify-content: center; gap: 8px; margin-top: 8px; }
+.loc-kb .kr:first-child { margin-top: 0; }
+.loc-kb .k { display: grid; place-items: center; flex: 0 0 104px; height: 66px; border-radius: 12px; background: #2a2723; color: #f4efe6; font-size: 28px; }
+.loc-kb .k:active { background: #4a453f; }
+.loc-kb .k--wide { flex-basis: 150px; font-size: 20px; font-weight: 700; }
+.loc-kb .k--space { flex-basis: 520px; font-size: 20px; }
+.loc-kb .k--go { background: var(--prayer); color: #fff; }
