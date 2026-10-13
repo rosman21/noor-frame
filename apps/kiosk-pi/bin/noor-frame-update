@@ -2,15 +2,20 @@
 # Updates noor-frame to the latest version and restarts it. Run as root (sudo noor-frame-update).
 set -eu
 APP_DIR=@APP_DIR@
-cd "$APP_DIR"
-before=$(git rev-parse HEAD)
-git pull --ff-only
-after=$(git rev-parse HEAD)
+APP_USER=$(stat -c %U "$APP_DIR")
+if [ "$APP_USER" = root ]; then
+  echo "Refusing to run Git or npm as root; make $APP_DIR writable by its unprivileged owner." >&2
+  exit 1
+fi
+app() { runuser -u "$APP_USER" -- "$@"; }
+before=$(app git -C "$APP_DIR" rev-parse HEAD)
+app git -C "$APP_DIR" pull --ff-only
+after=$(app git -C "$APP_DIR" rev-parse HEAD)
 if [ "$before" = "$after" ]; then echo "Already up to date."; exit 0; fi
 if systemctl is-enabled --quiet noor-server 2>/dev/null; then
-  npm ci --no-audit --no-fund
-  npm run build
+  app npm --prefix "$APP_DIR" ci --no-audit --no-fund
+  app npm --prefix "$APP_DIR" run build
   systemctl restart noor-server
 fi
 systemctl try-restart noor-kiosk-helper noor-kiosk
-echo "Updated to $(git log -1 --format='%h %s')."
+echo "Updated to $(app git -C "$APP_DIR" log -1 --format='%h %s')."

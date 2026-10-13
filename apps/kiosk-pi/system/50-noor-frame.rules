@@ -1,7 +1,14 @@
 // /etc/polkit-1/rules.d/50-noor-frame.rules
 // Lets the noor user manage Wi-Fi (the kiosk helper's setup network), without root.
 polkit.addRule(function (action, subject) {
-  if (action.id.indexOf("org.freedesktop.NetworkManager.") === 0 && subject.user === "noor") {
+  var allowed = [
+    "org.freedesktop.NetworkManager.network-control",
+    "org.freedesktop.NetworkManager.settings.modify.system",
+    "org.freedesktop.NetworkManager.wifi.share.open",
+    "org.freedesktop.NetworkManager.wifi.share.protected",
+    "org.freedesktop.NetworkManager.enable-disable-wifi"
+  ];
+  if (allowed.indexOf(action.id) !== -1 && subject.user === "noor") {
     return polkit.Result.YES;
   }
 });

@@ -28,6 +28,7 @@ import android.webkit.WebViewClient;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.net.URI;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -73,6 +74,12 @@ public class MainActivity extends Activity {
     settings.setUseWideViewPort(true);
     settings.setMediaPlaybackRequiresUserGesture(false);
     web.setWebViewClient(new WebViewClient() {
+      @Override public boolean shouldOverrideUrlLoading(WebView view, String url) {
+        if (isAllowedUrl(url)) return false;
+        Log.w(TAG, "Blocked navigation outside Noor's server or setup page");
+        return true;
+      }
+
       // Called only for the main page, so a failed image or API call never lands here.
       @Override public void onReceivedError(WebView view, int code, String description, String url) {
         Log.e(TAG, "Page error " + code + " at " + url + ": " + description);
@@ -101,12 +108,38 @@ public class MainActivity extends Activity {
     return getPreferences(MODE_PRIVATE).getString("url", DEFAULT_URL);
   }
 
+  private boolean isAllowedUrl(String url) {
+    if (SETUP_URL.equals(url)) return true;
+    return sameOrigin(url, serverUrl());
+  }
+
+  private static boolean sameOrigin(String first, String second) {
+    try {
+      URI a = new URI(first), b = new URI(second);
+      String aScheme = a.getScheme(), bScheme = b.getScheme();
+      if (aScheme == null || bScheme == null || a.getHost() == null || b.getHost() == null
+          || a.getUserInfo() != null || b.getUserInfo() != null) return false;
+      aScheme = aScheme.toLowerCase();
+      bScheme = bScheme.toLowerCase();
+      if (!("http".equals(aScheme) || "https".equals(aScheme))) return false;
+      int aPort = a.getPort() == -1 ? ("https".equals(aScheme) ? 443 : 80) : a.getPort();
+      int bPort = b.getPort() == -1 ? ("https".equals(bScheme) ? 443 : 80) : b.getPort();
+      return aScheme.equals(bScheme) && a.getHost().equalsIgnoreCase(b.getHost()) && aPort == bPort;
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
   private void showDashboard(Intent intent) {
     String url = intent == null ? null : intent.getDataString();
     if (url != null && (url.startsWith("http://") || url.startsWith("https://"))) {
       getPreferences(MODE_PRIVATE).edit().putString("url", url).apply();
     } else {
       url = serverUrl();
+    }
+    if (!sameOrigin(url, url)) {
+      showSetup("offline");
+      return;
     }
     Log.i(TAG, "Loading " + url);
     web.loadUrl(url);
@@ -207,7 +240,7 @@ public class MainActivity extends Activity {
     public boolean setServerUrl(String url) {
       url = url == null ? "" : url.trim();
       if (!url.startsWith("http://") && !url.startsWith("https://")) url = "http://" + url;
-      if (!url.matches("https?://[^/\\s]+(/\\S*)?")) return false;
+      if (!sameOrigin(url, url) || !url.matches("https?://[^/\\s]+(/\\S*)?")) return false;
       if (!url.substring(url.indexOf("//") + 2).contains("/")) url += "/";
       getPreferences(MODE_PRIVATE).edit().putString("url", url).apply();
       Log.i(TAG, "Server address set to " + url);

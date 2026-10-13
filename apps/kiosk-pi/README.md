@@ -14,14 +14,18 @@ The step-by-step guide is [docs/pi-server.md](../../docs/pi-server.md).
 | Path | What it does |
 | --- | --- |
 | `install.sh` | Installs and updates everything for the chosen role. Safe to run again. |
-| `helper/noor_kiosk.py` | Runs on a screen Pi. It serves the dashboard to Chromium on `localhost:8788`, shows a "connecting" screen when the server can't be reached, and turns the display off at night when the dashboard asks. When there's no Wi-Fi, it starts the **Noor Frame Setup** network so a phone can choose the home Wi-Fi. |
+| `helper/noor_kiosk.py` | Runs on a screen Pi. It serves the dashboard to Chromium on `localhost:8788`, shows a "connecting" screen when the server can't be reached, and turns the display off at night when the dashboard asks. When there's no Wi-Fi, it starts the **Noor Frame Setup** network so a phone can choose the home Wi-Fi. Its random per-device password is saved in `/var/lib/noor/kiosk-state.json` and shown on the frame's setup screen. |
 | `helper/pages/` | The connecting/Wi-Fi screen, and the phone's setup page. Both work with no internet. |
 | `../kiosk-shared/setup.html` | Noor's on-screen Wi-Fi page, with its own keyboard. It's the same page the Android frames use; the helper serves it at `/kiosk/setup`. |
 | `splash/` | The optional boot splash (`--splash`): a Plymouth theme and its picture, rendered from the Android boot animation with `render.mjs --still`. |
-| `bin/noor-browser` | Starts Chromium full screen inside [cage](https://github.com/cage-kiosk/cage), with sound allowed and an optional screen rotation. |
+| `bin/noor-browser` | Starts Chromium full screen inside [cage](https://github.com/cage-kiosk/cage), with sound allowed and optional 180-degree rotation for an upside-down landscape mount. |
 | `bin/noor-frame-update` | `sudo noor-frame-update`: pulls the latest version and restarts. |
 | `systemd/` | `noor-server`, `noor-kiosk-helper`, `noor-kiosk` (the screen), and the optional nightly update timer. |
-| `system/` | Small system files: the screen's login session (PAM), Wi-Fi permission for the `noor` account (polkit), backlight access (udev), the setup network's sign-in page redirect (dnsmasq), and the server's network announcement (avahi). |
+| `system/` | Small system files: the screen's login session (PAM), limited Wi-Fi permissions for the `noor` account (polkit), backlight access (udev), the setup network's sign-in page redirect (dnsmasq), and the server's network announcement (avahi). |
+
+The setup network password is generated once per device, stored under `/var/lib/noor/`, and displayed on the frame while setup is active. The phone setup page tells you where to find it. An explicitly configured password in `/etc/noor-frame/kiosk.json` is kept.
+
+The screen is landscape only. Pass `--rotate 180` for an upside-down landscape mount; `--rotate 90` and `--rotate 270` are rejected.
 
 ## How the screen talks to the dashboard
 
