@@ -8,6 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { callerAddress, staticPath } from '../src/node-http.js';
+import { announcement } from '../src/announce.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -42,6 +43,17 @@ test('static paths stay inside the dashboard folder', () => {
   assert.equal(staticPath('/srv/noor/dist', '/../dist-old/x'), path.join('/srv/noor/dist', 'dist-old/x'));
 });
 
+test('the server announces itself with the system’s own tool', () => {
+  const all = () => true, none = () => false;
+  assert.deepEqual(announcement({ platform: 'darwin', port: 8787, host: 'Studio.local', has: all }),
+    { cmd: 'dns-sd', args: ['-R', 'noor-frame on Studio', '_noor-frame._tcp', 'local', '8787'] });
+  assert.deepEqual(announcement({ platform: 'linux', port: 9000, host: 'den', has: all, exists: () => false }),
+    { cmd: 'avahi-publish', args: ['-s', 'noor-frame on den', '_noor-frame._tcp', '9000'] });
+  // A Pi set up by install.sh already announces it through Avahi's service file.
+  assert.equal(announcement({ platform: 'linux', port: 8787, host: 'pi', has: all, exists: () => true }), null);
+  assert.equal(announcement({ platform: 'win32', port: 8787, host: 'pc', has: none }), null);
+});
+
 // The real server, started on a free port with an empty home folder.
 async function startServer() {
   const port = await new Promise((resolve) => { const s = net.createServer().listen(0, () => { const p = s.address().port; s.close(() => resolve(p)); }); });
@@ -50,7 +62,7 @@ async function startServer() {
   fs.mkdirSync(dist);
   fs.writeFileSync(path.join(dist, 'index.html'), '<!doctype html><title>Noor</title>');
   const child = spawn(process.execPath, [path.join(HERE, '../src/node.js')], {
-    env: { ...process.env, PORT: String(port), NOOR_HOME: home, STATIC_DIR: dist, FRAME_SECRET: 'x'.repeat(32) },
+    env: { ...process.env, PORT: String(port), NOOR_HOME: home, STATIC_DIR: dist, FRAME_SECRET: 'x'.repeat(32), NOOR_ANNOUNCE: '0' },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let output = '';

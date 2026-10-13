@@ -12,6 +12,7 @@
 //   NOOR_AUTO_APPROVE  0 = never approve new screens automatically (see NOOR_SETUP_CODE)
 //   NOOR_TRUST_PROXY   behind a tunnel or reverse proxy on this computer: 'cloudflare' or 1
 //                      (see node-http.js); otherwise proxied requests are never approved automatically
+//   NOOR_ANNOUNCE      0 = don't announce this server on the network (see announce.js)
 //   NOOR_SETUP_CODE  at least 12 characters; opening the dashboard once with ?setup=<code>
 //                    approves that screen (the way in when nothing is approved automatically)
 
@@ -24,6 +25,7 @@ import { randomBytes } from 'node:crypto';
 import { makeFileStore } from '@noor-frame/core';
 import { createHandler } from './handler.js';
 import { callerAddress, staticPath } from './node-http.js';
+import { announce } from './announce.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../../..');
@@ -111,6 +113,8 @@ createServer(async (req, res) => {
 }).listen(PORT, '0.0.0.0', () => {
   const ip = lanIp();
   console.log(`noor-frame server on http://localhost:${PORT}/` + (ip ? `  ·  on your Wi-Fi: http://${ip}:${PORT}/` : ''));
+  const on = announce({ port: PORT });
+  if (on) console.log(`Screens on this network can find it as "${on.name}".`);
 });
 
 async function respond(req, res) {
