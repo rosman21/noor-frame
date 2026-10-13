@@ -102,7 +102,7 @@ import qrcode from 'qrcode-generator';
     if (rec != null && App.ownSetting('method') == null && Number(App.setting('method')) !== rec) {
       App.banner({
         tone: 'ink', icon: 'moonstar', title: App.t('Use {method}?', { method: App.t(nameOf(METHODS, rec)[1]) }),
-        sub: App.t('This calculation method is usual in {country}.', { country: loc.country || loc.name }),
+        sub: App.t('This calculation method is usual in {country}.', { country: App.esc(loc.country || loc.name) }),
         action: App.t('Use it'), dismiss: App.t('Keep current'), ms: 30000,
         onAction: function () { App.setSetting('method', rec); render(); }
       });

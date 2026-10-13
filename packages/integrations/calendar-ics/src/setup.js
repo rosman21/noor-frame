@@ -115,8 +115,10 @@ export function makeSetup({ validate = validateFeed } = {}) {
     const body = request.method === 'POST' ? await request.json().catch(() => ({})) : {};
 
     if (p === '/api/setup') {
-      const ok = !!(await store.get('pair:' + url.searchParams.get('token')));
-      return html(page({ token: url.searchParams.get('token'), expired: !ok }));
+      // Only a real pairing code (32 hex characters) is ever put into the page.
+      const token = /^[0-9a-f]{32}$/.test(url.searchParams.get('token') || '') ? url.searchParams.get('token') : null;
+      const ok = !!token && !!(await store.get('pair:' + token));
+      return html(page({ token: ok ? token : null, expired: !ok }));
     }
     if (p === '/api/setup/calendar' && request.method === 'POST') return addCalendar(store, cfg, body);
     if (p === '/api/calendars/add' && request.method === 'POST') return addCalendar(store, cfg, body, !!ctx.device?.approved);

@@ -4,8 +4,8 @@
 // without real calendars. Other integrations (e.g. travel) can add to events via the
 // "events" hook.
 
-import { defineIntegration, json, getText } from '@noor-frame/core';
-import { expandFeed, icsUrl } from './ics.js';
+import { defineIntegration, json } from '@noor-frame/core';
+import { expandFeed, fetchFeed } from './ics.js';
 import { demoIcs } from './demo.js';
 import { makeSetup, effectiveCalendars, COLORS } from './setup.js';
 
@@ -19,7 +19,7 @@ export async function loadEvents(ctx, from, to) {
   const results = await Promise.all(list.map(async (cal) => {
     try {
       const demo = cal.url.match(/^demo:(\w+)$/);
-      const text = demo ? demoIcs(demo[1], loc.timezone) : await ctx.remember(`ics-${cal.id}`, 5 * 60e3, () => getText(icsUrl(cal.url)));
+      const text = demo ? demoIcs(demo[1], loc.timezone) : await ctx.remember(`ics-${cal.id}`, 5 * 60e3, () => fetchFeed(cal.url));
       return { id: cal.id, events: expandFeed(text, cal, from, to) };
     } catch (err) {
       return { id: cal.id, events: [], error: `${cal.name}: ${err.message}` };

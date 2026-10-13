@@ -88,7 +88,7 @@ function eventBlock(e, posStyle, { lane = null, color = null, half = false } = {
   const travel = e.travel ? `<span class="ev-travel" style="height:${(e.travel * HOUR_PX) / 60}px"></span>` : '';
   const leave = e.travel ? ` · <b>${App.icon('car', 16)}${App.t('Leave {time}', { time: App.fmt.time(App.leaveBy(e), false) })}</b>` : '';
 
-  return `<button class="${classes.join(' ')}" data-ev="${e.id}" style="${App.pstyle(color || App.evColor(e))};${posStyle}">${travel}` +
+  return `<button class="${classes.join(' ')}" data-ev="${App.esc(e.id)}" style="${App.pstyle(color || App.evColor(e))};${posStyle}">${travel}` +
     `<span class="ev-title">${App.esc(e.title)}</span>` +
     `<span class="ev-meta">${App.fmt.range(e.start, e.end)}${leave}</span>` +
     (withDots ? `<span class="ev-with">${withDots}</span>` : '') +
@@ -131,7 +131,7 @@ const gridShell = (inner) => `<div class="grid-scroll"><div class="grid" style="
 
 // An all-day bar. `cont` = it started before the first visible day.
 function allDayBar(e, gridColumn, extra = '', cont = false, more = false) {
-  return `<button class="ad${cont ? ' ad--cont' : ''}" data-ev="${e.id}" style="grid-column:${gridColumn};${App.pstyle(App.evColor(e))}">` +
+  return `<button class="ad${cont ? ' ad--cont' : ''}" data-ev="${App.esc(e.id)}" style="grid-column:${gridColumn};${App.pstyle(App.evColor(e))}">` +
     (cont ? App.icon('left', 16) : '') + App.esc(e.title) + extra + (more ? App.icon('right', 16) : '') + '</button>';
 }
 
@@ -199,9 +199,9 @@ function renderWeek() {
     const d = App.addDays(cal.date, i);
     const allDay = App.allDayOn(d), timed = App.timedOn(d);
     const room = WEEK_ROWS - allDay.length, hidden = timed.length - room;
-    const bars = allDay.map((e) => `<button class="wk-ad" data-ev="${e.id}" style="${App.pstyle(App.evColor(e))}">${App.esc(e.title)}</button>`).join('');
+    const bars = allDay.map((e) => `<button class="wk-ad" data-ev="${App.esc(e.id)}" style="${App.pstyle(App.evColor(e))}">${App.esc(e.title)}</button>`).join('');
     const cards = timed.slice(0, Math.max(0, room)).map((e) =>
-      `<button class="wk-ev${e.end <= now ? ' is-past' : ''}" data-ev="${e.id}" style="${App.pstyle(App.evColor(e))}">` +
+      `<button class="wk-ev${e.end <= now ? ' is-past' : ''}" data-ev="${App.esc(e.id)}" style="${App.pstyle(App.evColor(e))}">` +
       `<span class="wk-t">${App.fmt.time(e.start, false)}</span><span class="wk-n">${App.esc(e.title)}</span></button>`).join('');
     return `<div class="wk-col${App.sameDay(d, now) ? ' is-today' : ''}" data-day="${+d}">` +
       `<div class="wk-head"><b>${App.fmt.dayShort(d)}</b><span class="num">${d.getDate()}</span></div>${bars}${cards}` +
@@ -367,7 +367,7 @@ App.eventSheet = (e) => {
 function overlapSheet(ids) {
   const list = ids.map(App.findEvent).filter(Boolean);
   const rows = list.map((e) =>
-    `<button class="more-row" data-ev="${e.id}" style="${App.pstyle(App.evColor(e))}"><i></i><b>${App.esc(e.title)}</b><span>${App.fmt.range(e.start, e.end)}</span></button>`).join('');
+    `<button class="more-row" data-ev="${App.esc(e.id)}" style="${App.pstyle(App.evColor(e))}"><i></i><b>${App.esc(e.title)}</b><span>${App.fmt.range(e.start, e.end)}</span></button>`).join('');
   App.sheet(`<div class="sheet-pad"><div class="label">${App.t('Overlapping')}</div>` +
     `<h2 class="serif sheet-h">${App.t('{n} more events', { n: list.length })}</h2><div class="more-list">${rows}</div></div>`, {
     onMount(sheet) {

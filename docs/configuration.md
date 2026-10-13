@@ -223,6 +223,7 @@ All optional. Set them before `npm start`, or on a Raspberry Pi in `/etc/noor-fr
 | `STATIC_DIR` | `apps/frame/dist` | The built dashboard to serve. |
 | `NOOR_PUBLIC_URL` | `http://<this computer's IP>:PORT` | The address phones should use, for QR codes. Set it if the automatic one is wrong, for example `http://noor.local:8787`. |
 | `NOOR_AUTO_APPROVE` | on | Set to `0` to stop approving new screens automatically. |
+| `NOOR_TRUST_PROXY` | none | Behind your own proxy on the same computer: `cloudflare` or `1`. See below. |
 | `NOOR_SETUP_CODE` | none | A secret of 12 or more characters. Opening the dashboard once with `?setup=<code>` approves that screen. Use it with `NOOR_AUTO_APPROVE=0`. |
 
 ## Screens and phones
@@ -236,8 +237,12 @@ Reading the dashboard needs no key. Changing anything needs an **approved device
 - A phone that scans a screen's QR code (Settings → Open on phone) gets its own approved key.
   The code lasts 15 minutes.
 - Behind a tunnel or reverse proxy on the same computer (cloudflared, nginx…), every request
-  arrives from localhost. The server then uses the forwarded address instead, so the internet
-  doesn't look like your home network.
+  arrives from localhost, and its forwarding headers say whatever the sender wrote. So such
+  requests are never approved automatically; use `NOOR_SETUP_CODE`. If you run the proxy
+  yourself, tell the server which one with `NOOR_TRUST_PROXY`: `cloudflare` believes only
+  Cloudflare's `CF-Connecting-IP`, and `1` believes only the last `X-Forwarded-For` entry (the
+  one your proxy added).
+- At most 10 new screens can register from one address in 10 minutes (60 in all).
 
 With `NOOR_AUTO_APPROVE=0`, new screens are approved only from an approved device. To approve
 the first one, set `NOOR_SETUP_CODE` and open the dashboard once with the code in the address:

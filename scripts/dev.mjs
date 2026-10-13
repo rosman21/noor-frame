@@ -2,11 +2,12 @@
 //   API      http://localhost:8787
 //   frame    http://localhost:5174   (open this one; /api is proxied to the server)
 //   phone    http://localhost:5174/companion/   (via the frame's dev server; QR codes point here)
-// PORT / API_PORT change the server port.
+// PORT / API_PORT change the server port. A dev server doesn't announce itself to screens on the
+// network (NOOR_ANNOUNCE=1 makes it).
 import { spawn } from 'node:child_process';
 
 const port = process.env.PORT || process.env.API_PORT || '8787';
-const env = { ...process.env, PORT: port, API_PORT: port };
+const env = { ...process.env, PORT: port, API_PORT: port, NOOR_ANNOUNCE: process.env.NOOR_ANNOUNCE || '0' };
 const run = (args) => spawn('npm', args, { stdio: 'inherit', env });
 const children = ['@noor-frame/server', '@noor-frame/frame', '@noor-frame/companion'].map((w) => run(['run', 'dev', '-w', w]));
 const stop = () => { for (const c of children) c.kill(); process.exit(); };

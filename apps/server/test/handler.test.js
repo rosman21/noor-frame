@@ -321,6 +321,13 @@ test('adding calendars from a phone: pair, paste two links, manage them', async 
   const page = await call('GET', '/api/setup?token=' + pair.token);
   assert.match(page.type, /text\/html/);
   assert.match(page.body, /Add a calendar/);
+  // Anything but a real code gets the expired page, and never reaches the page's script.
+  for (const token of ['</script><script>alert(1)</script>', pair.token + '"', 'f'.repeat(32)]) {
+    const bad = await call('GET', '/api/setup?token=' + encodeURIComponent(token));
+    assert.match(bad.body, /This code has expired/);
+    assert.ok(!bad.body.includes('alert(1)') && !bad.body.includes(pair.token), token);
+    assert.match(bad.body, /token: ""/);
+  }
 
   const add = await call('POST', '/api/setup/calendar', { token: pair.token, url: 'webcal://cal.example/school.ics\nhttps://cal.example/work.ics' });
   assert.deepEqual(add.body.results.map((r) => r.name), ['School', 'Work']);
@@ -446,6 +453,17 @@ test('places can be searched by postal code, nearest country first', async () =>
   assert.equal(calls.filter((c) => c.startsWith('geocoding-api')).length, asked);
   assert.deepEqual((await call('POST', '/api/location/search', { q: 'x' })).body.places, []);
   assert.deepEqual((await call('POST', '/api/location/search', { q: 'y'.repeat(81) })).body.places, []);
+});
+
+test('a flood of new screens is slowed down', async () => {
+  const { call } = server();
+  const register = (from) => call('POST', '/api/devices/register', { name: 'Hall' }, { from, key: null });
+  for (let i = 0; i < 10; i++) assert.equal((await register('203.0.113.9')).status, 201);
+  const r = await register('203.0.113.9');
+  assert.equal(r.status, 429);
+  assert.match(r.body.error, /Too many new screens/);
+  // Someone else (a screen at home) can still register.
+  assert.equal((await register('192.168.1.20')).status, 201);
 });
 
 test('bad settings are refused with a readable reason', async () => {

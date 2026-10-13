@@ -17,19 +17,21 @@ const MODELS = [
 
 const fail = (err) => (err instanceof AiError ? json({ error: err.message }, err.status) : Promise.reject(err));
 
-// One brief per household day, made the first time a screen asks for it and then kept.
-const making = new Map();
+// One brief per household day, made the first time a screen asks for it and then kept (in
+// memory when there's no storage, so screens asking again never cost another call).
+const making = new Map(), unsaved = new Map();
 async function briefFor(ctx, { fresh = false } = {}) {
   const s = await ctx.settings('ai');
   const tz = (await ctx.location()).timezone;
   const key = 'ai:brief:' + localDate(tz) + ':' + s.briefLanguage;
   if (!fresh) {
-    const saved = ctx.store && (await ctx.store.get(key));
+    const saved = ctx.store ? await ctx.store.get(key) : unsaved.get(key);
     if (saved) return saved;
   }
   if (!making.has(key)) {
     making.set(key, makeBrief(s, ctx).then(async (b) => {
       if (ctx.store) await ctx.store.put(key, b, 2 * 86400);
+      else { unsaved.clear(); unsaved.set(key, b); }
       return b;
     }).finally(() => making.delete(key)));
   }
