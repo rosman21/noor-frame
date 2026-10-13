@@ -54,16 +54,20 @@ export function costCents(model, usage) {
   return ((input * inP) + (usage.output_tokens || 0) * outP) / 1e6 * 100;
 }
 
+// Without storage (a key in frame.config.json, no saved data) spending is counted in memory, so
+// the limit still holds until the server restarts.
+const unsaved = new Map();
 async function spentToday(ctx, tz) {
-  return (ctx.store && (await ctx.store.get('ai:spend:' + localDate(tz)))) || { cents: 0, calls: 0 };
+  const key = 'ai:spend:' + localDate(tz);
+  return (ctx.store ? await ctx.store.get(key) : unsaved.get(key)) || { cents: 0, calls: 0 };
 }
 async function record(ctx, tz, model, usage) {
-  if (!ctx.store) return;
   const key = 'ai:spend:' + localDate(tz);
   const s = await spentToday(ctx, tz);
   s.cents = Math.round((s.cents + costCents(model, usage)) * 1000) / 1000;
   s.calls += 1;
-  await ctx.store.put(key, s, 3 * 86400);
+  if (ctx.store) await ctx.store.put(key, s, 3 * 86400);
+  else { unsaved.clear(); unsaved.set(key, s); }
 }
 async function checkBudget(ctx, tz, limitCents) {
   const s = await spentToday(ctx, tz);

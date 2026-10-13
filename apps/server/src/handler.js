@@ -70,6 +70,9 @@ export function createHandler({
   const devices = store ? makeDevices(store) : null;
   const registry = makeRegistry({ integrations, config, store, secrets });
   const remember = makeCache();
+  // New devices per caller address (and in all) per 10 minutes. A screen registers once, so this
+  // only slows down something flooding the list, which would push out screens waiting for approval.
+  const registrations = makeLimiter({ each: 10, total: 60, windowMs: 10 * 60e3 });
   // Changes are read-modify-write (settings, calendars, devices), so they run one at a time.
   const oneAtATime = makeLock();
 
@@ -89,6 +92,7 @@ export function createHandler({
 
     'POST /api/devices/register': async (request) => {
       if (!devices) return deny(null);
+      if (!registrations.take(clientIp(request) || '')) return json({ error: 'Too many new screens at once. Try again in a few minutes.' }, 429);
       const body = await readBody(request);
       const approved = isPrivateAddress(clientIp(request)) || setupCodeMatches(setupCode, body.setupCode);
       const d = await devices.register({ name: body.name, kind: body.kind === 'phone' ? 'phone' : 'screen', approved });
@@ -203,4 +207,20 @@ export function createHandler({
   handle.registry = registry;
   handle.devices = devices;
   return handle;
+}
+
+// Fixed-window counters: take(key) is false once `each` uses by one key, or `total` by all, have
+// happened in the current window.
+function makeLimiter({ each, total, windowMs, now = () => Date.now() }) {
+  let start = 0, all = 0, counts = new Map();
+  return {
+    take(key) {
+      if (now() - start >= windowMs) { start = now(); all = 0; counts = new Map(); }
+      const n = counts.get(key) || 0;
+      if (n >= each || all >= total) return false;
+      counts.set(key, n + 1);
+      all += 1;
+      return true;
+    },
+  };
 }

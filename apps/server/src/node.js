@@ -10,6 +10,8 @@
 //   STATIC_DIR     built dashboard to serve (default: apps/frame/dist)
 //   NOOR_PUBLIC_URL  the address phones should use, if not http://<this computer's IP>:PORT
 //   NOOR_AUTO_APPROVE  0 = never approve new screens automatically (see NOOR_SETUP_CODE)
+//   NOOR_TRUST_PROXY   behind a tunnel or reverse proxy on this computer: 'cloudflare' or 1
+//                      (see node-http.js); otherwise proxied requests are never approved automatically
 //   NOOR_SETUP_CODE  at least 12 characters; opening the dashboard once with ?setup=<code>
 //                    approves that screen (the way in when nothing is approved automatically)
 
@@ -21,6 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
 import { makeFileStore } from '@noor-frame/core';
 import { createHandler } from './handler.js';
+import { callerAddress, staticPath } from './node-http.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../../..');
@@ -55,18 +58,6 @@ function lanIp() {
   return null;
 }
 
-// Where a request really comes from. Through a tunnel or reverse proxy on this machine
-// (cloudflared, nginx…) everything arrives from localhost, so use the forwarded address instead;
-// otherwise the whole internet would look like the home network. NOOR_AUTO_APPROVE=0 turns
-// automatic approval of new screens off altogether.
-function callerAddress(req) {
-  if (process.env.NOOR_AUTO_APPROVE === '0') return '';
-  const socket = (req.socket.remoteAddress || '').replace(/^::ffff:/, '');
-  const forwarded = req.headers['cf-connecting-ip'] || req.headers['x-real-ip'] || String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
-  const loopback = socket === '::1' || socket.startsWith('127.');
-  return loopback && forwarded ? forwarded : socket;
-}
-
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
   '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml',
@@ -74,8 +65,8 @@ const TYPES = {
 };
 
 function serveStatic(pathname, res) {
-  let file = path.normalize(path.join(STATIC, decodeURIComponent(pathname)));
-  if (!file.startsWith(STATIC)) { res.writeHead(403).end(); return; }
+  let file = staticPath(STATIC, pathname);
+  if (!file) { res.writeHead(400, { 'content-type': 'text/plain' }).end('Bad path'); return; }
   try {
     if (fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
   } catch {
@@ -110,7 +101,22 @@ const handle = createHandler({
 });
 
 createServer(async (req, res) => {
-  const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  // A request that can't be read gets an error, never takes the server down.
+  try { await respond(req, res); }
+  catch (err) {
+    console.error(`${req.method} ${req.url}: ${err.stack || err}`);
+    if (!res.headersSent) res.writeHead(500, { 'content-type': 'text/plain' });
+    res.end();
+  }
+}).listen(PORT, '0.0.0.0', () => {
+  const ip = lanIp();
+  console.log(`noor-frame server on http://localhost:${PORT}/` + (ip ? `  ·  on your Wi-Fi: http://${ip}:${PORT}/` : ''));
+});
+
+async function respond(req, res) {
+  let url;
+  try { url = new URL(req.url, 'http://localhost'); }
+  catch { res.writeHead(400, { 'content-type': 'text/plain' }).end('Bad request'); return; }
   if (!url.pathname.startsWith('/api/')) return serveStatic(url.pathname, res);
   let body;
   if (req.method === 'POST' || req.method === 'PUT') {
@@ -126,11 +132,8 @@ createServer(async (req, res) => {
   // The caller's address decides whether a new screen is approved automatically (home network).
   // Set here from the socket, never trusted from the request itself.
   const headers = new Headers(req.headers);
-  headers.set('x-noor-client-ip', callerAddress(req));
+  headers.set('x-noor-client-ip', callerAddress({ socket: req.socket.remoteAddress, headers: req.headers }));
   const r = await handle(new Request(url, { method: req.method, headers, body }));
   res.writeHead(r.status, Object.fromEntries(r.headers));
   res.end(Buffer.from(await r.arrayBuffer()));
-}).listen(PORT, '0.0.0.0', () => {
-  const ip = lanIp();
-  console.log(`noor-frame server on http://localhost:${PORT}/` + (ip ? `  ·  on your Wi-Fi: http://${ip}:${PORT}/` : ''));
-});
+}

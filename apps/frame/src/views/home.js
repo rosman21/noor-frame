@@ -79,7 +79,7 @@ function heroHtml() {
   const trip = e.travel ? ' · ' + App.t(e.trip?.mode === 'walking' ? '{n} min walk' : '{n} min drive', { n: e.travel }) : '';
   const place = e.loc ? ' · ' + App.esc(e.loc.split(',')[0]) : '';
 
-  return `<button class="h-hero" style="${App.pstyle(App.evColor(e))}" data-ev="${e.id}">
+  return `<button class="h-hero" style="${App.pstyle(App.evColor(e))}" data-ev="${App.esc(e.id)}">
     <div class="h-hero-main">
       <div class="label label--on">${App.t('Next up')} · ${App.esc(who)}</div>
       <div class="h-hero-title serif">${App.esc(e.title)}</div>
@@ -101,13 +101,13 @@ function lanesHtml() {
     const items = left.length
       ? left.map((e) => {
         const started = e.start <= now;
-        return `<button class="h-ev${started ? ' is-now' : ''}" data-ev="${e.id}">
+        return `<button class="h-ev${started ? ' is-now' : ''}" data-ev="${App.esc(e.id)}">
           <span class="h-ev-t">${started ? App.t('Now') : App.fmt.time(e.start, false)}</span>
           <span class="h-ev-n">${App.esc(e.title)}</span></button>`;
       }).join('')
       : `<div class="h-free serif">${App.t('{free} the rest of the day', { free: `<i>${App.t('Free')}</i>` })}</div>`;
     return `<div class="h-lane" style="${App.pstyle(p)}">
-      <div class="h-lane-head">${App.avatar(p, 30)}<b>${p.name}</b></div>
+      <div class="h-lane-head">${App.avatar(p, 30)}<b>${App.esc(p.name)}</b></div>
       ${items}
       <button class="h-more is-hidden" data-go="calendar"></button>
     </div>`;

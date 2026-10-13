@@ -26,10 +26,26 @@ export async function getJson(url, { timeoutMs = 15000, headers = {} } = {}) {
   return res.json();
 }
 
-export async function getText(url, { timeoutMs = 20000 } = {}) {
+// maxBytes stops reading a reply that is bigger than anything sensible (a huge or endless file).
+export async function getText(url, { timeoutMs = 20000, maxBytes = 0 } = {}) {
   const res = await fetch(url, { headers: { 'user-agent': USER_AGENT }, signal: AbortSignal.timeout(timeoutMs) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.text();
+  if (!maxBytes || !res.body) return res.text();
+  const tooBig = () => new Error(`larger than ${Math.round(maxBytes / 1e6)} MB`);
+  if (Number(res.headers.get('content-length')) > maxBytes) { res.body.cancel().catch(() => {}); throw tooBig(); }
+  const reader = res.body.getReader(), parts = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.length;
+    if (size > maxBytes) { reader.cancel().catch(() => {}); throw tooBig(); }
+    parts.push(value);
+  }
+  const all = new Uint8Array(size);
+  let at = 0;
+  for (const p of parts) { all.set(p, at); at += p.length; }
+  return new TextDecoder().decode(all);
 }
 
 export function escapeHtml(s) {

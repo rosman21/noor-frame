@@ -148,6 +148,23 @@ test('the daily limit stops spending, with a clear reason', async () => {
   assert.ok(u.cents > 2 && u.cents < 3);
 });
 
+test('without storage, the daily limit still holds and the brief is kept', async () => {
+  // A key in frame.config.json and nowhere to save anything.
+  const serverWith = (ai) => {
+    const handle = createHandler({ config: { ...CONFIG, integrations: { 'ai-claude': true }, ai: { apiKey: 'sk-ant-api03-TESTKEY-abcd', dailyLimitCents: 1, ...ai } }, store: null, log: {} });
+    return async (path) => { const r = await handle(new Request('http://frame.local' + path)); return { status: r.status, body: await r.json() }; };
+  };
+  claude = () => message([{ type: 'text', text: JSON.stringify({ headline: 'A calm day.', items: [] }) }], { usage: { input_tokens: 4000, output_tokens: 400 } }); // ≈ 2.4¢
+  const get = serverWith({});
+  assert.equal((await get('/api/ai/brief')).status, 200);
+  assert.equal((await get('/api/ai/brief')).status, 200);
+  assert.equal(sent.length, 1, 'the second screen gets the same brief');
+  // A brief in another language is a new call, and today's spending already passed the limit.
+  const other = await serverWith({ briefLanguage: 'fr' })('/api/ai/brief');
+  assert.equal(other.status, 429);
+  assert.equal(sent.length, 1);
+});
+
 test('a declined request and a rejected key come back as plain messages', async () => {
   const { call, token } = await setup();
   claude = () => message([], { stop_reason: 'refusal', stop_details: { type: 'refusal', category: null, explanation: '' } });
