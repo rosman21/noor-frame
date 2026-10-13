@@ -19,6 +19,9 @@ Include:
 We aim to acknowledge reports within a week and to agree a disclosure date with
 you. We'll credit you in the release notes unless you'd rather we didn't.
 
+Maintainers: enable **Private vulnerability reporting** in the repository's GitHub
+**Settings → Security** so the private report link remains available.
+
 ## Supported versions
 
 This is an early project. Security fixes go to the latest `main` only.

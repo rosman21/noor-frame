@@ -71,15 +71,15 @@ logs, and how to update.
 | Option | Roles | What it does |
 | --- | --- | --- |
 | `--server URL` | `frame` | The server's address, for example `--server http://noor.local:8787`. Without it, the screen finds the server on the network by itself. With `both`, the screen always uses the server on the same Pi. |
-| `--rotate 90\|180\|270` | `frame`, `both` | Turns the picture for a portrait or upside-down screen. |
+| `--rotate 180` | `frame`, `both` | Turns the picture for an upside-down landscape mount. Portrait rotation is not supported. |
 | `--auto-update` | all | Updates noor-frame from Git every night at about 3:30. |
 | `--no-hotspot` | `frame`, `both` | Never starts the Wi-Fi setup network. |
 | `--splash` | `frame`, `both` | Shows Noor's boot splash (نور on green) instead of the Raspberry Pi logo and boot text. For a wall frame; a TV doesn't need it. See [Boot splash](#boot-splash). |
 
-For example, a portrait screen that shows a server on another computer:
+For example, an upside-down landscape screen that shows a server on another computer:
 
 ```sh
-sudo /opt/noor-frame/apps/kiosk-pi/install.sh frame --server http://noor.local:8787 --rotate 90
+sudo /opt/noor-frame/apps/kiosk-pi/install.sh frame --server http://noor.local:8787 --rotate 180
 ```
 
 ### Running it again
@@ -96,6 +96,9 @@ settings:
 
 - **Account:** creates a `noor` system account with no password and no login. The server and
   the screen run as this account.
+- **Checkout ownership:** if `/opt/noor-frame` is root-owned, the installer gives it to `noor`.
+  Updates run Git and npm as the checkout's owner, never as root; only service management uses
+  root. A checkout owned by your normal login account stays owned by you.
 - **Packages:** installs Node.js (server), and Chromium, cage, NetworkManager, qrencode and
   avahi (screen).
 - **Boot:** on a screen Pi, the desktop no longer starts at boot, because the screen belongs to
@@ -108,6 +111,11 @@ settings:
 | `noor-kiosk-helper` | `frame`, `both` | Serves the dashboard to the screen's browser, handles Wi-Fi setup, and turns the display off at night. |
 | `noor-kiosk` | `frame`, `both` | Chromium full screen on the Pi's display. |
 | `noor-update.timer` | with `--auto-update` | The nightly update. |
+
+The kiosk helper runs as `noor`, not as root. The installer adds a narrow polkit rule so this
+account can control NetworkManager, change system connection settings, create open or protected
+Wi-Fi hotspots, enable or disable Wi-Fi and scan for networks. These permissions are for the
+screen's Wi-Fi setup flow; the helper does not receive general root access.
 
 ## 4. Open the dashboard
 
@@ -134,8 +142,9 @@ There is no keyboard on the screen. Anything that needs typing happens on your p
    links, switch optional features on or off, add API keys, and approve, rename or remove
    screens.
 
-Screens and phones on your home network are approved automatically. To approve each one
-yourself, add `NOOR_AUTO_APPROVE=0` to `/etc/noor-frame/server.env` and run
+On a Node.js server, screens connecting from your home network are approved automatically.
+Phones pair by scanning the QR code shown by an approved screen. To approve each screen by hand,
+add `NOOR_AUTO_APPROVE=0` to `/etc/noor-frame/server.env` and run
 `sudo systemctl restart noor-server`.
 
 ## Wi-Fi on the screen
@@ -172,8 +181,9 @@ back within a minute and the screen says what went wrong. Join it again to retry
 Good to know:
 
 - The setup network uses 2.4 GHz.
-- Each Pi gets its own random setup password when it's installed. It is kept in
-  `/etc/noor-frame/kiosk.json`.
+- Each Pi gets its own random setup password on first start. The helper saves it in
+  `/var/lib/noor/kiosk-state.json` and shows it on the screen. An explicit password configured
+  in `/etc/noor-frame/kiosk.json` is preserved. Keep this password private.
 - If nobody uses the setup network for 10 minutes, the Pi stops it and tries its known Wi-Fi
   again.
 - To move a working screen to another network, open **Settings → Wi-Fi** on the screen, then
@@ -221,7 +231,7 @@ sudo plymouth-set-default-theme -R pix 2>/dev/null || true   # or your previous 
 sudo reboot
 ```
 
-The splash isn't rotated by `--rotate`, so a portrait frame shows it sideways.
+The splash isn't rotated by `--rotate`, so it will appear upside down on a `--rotate 180` mount.
 
 ## Updating
 
@@ -243,7 +253,7 @@ With `--auto-update`, the same update runs every night at about 3:30.
 | `/var/lib/noor-frame/data/` | The server's saved data: household settings, calendar links, screens, and encrypted API keys (`frame.json`), plus the key that encrypts them (`secret.key`). |
 | `/var/lib/noor-frame/frame.config.json` | Optional first-run settings. See the main [README](../README.md#try-it). |
 | `/etc/noor-frame/server.env` | Server options: `PORT`, `NOOR_PUBLIC_URL`, `NOOR_AUTO_APPROVE`. |
-| `/etc/noor-frame/kiosk.json` | Screen options: the server address, the setup network's name and password, and whether it may start. |
+| `/etc/noor-frame/kiosk.json` | Screen options: the server address, setup network name and any explicitly configured password, and whether it may start. A generated password is kept in `/var/lib/noor/kiosk-state.json`. |
 | `/etc/noor-frame/kiosk.env` | Screen rotation (`NOOR_ROTATE`). |
 
 After changing a file in `/etc/noor-frame`, restart the matching service:
@@ -292,6 +302,6 @@ journalctl -u noor-kiosk -u noor-kiosk-helper -f    # the screen
 | The setup network never appears. | It needs NetworkManager; the installer warns if it isn't running. Check that it wasn't installed with `--no-hotspot`. |
 | `noor.local` doesn't open. | Use the Pi's IP address (`hostname -I`). Some networks and older Android phones don't resolve `.local` names. |
 | Phones open the wrong address for the companion. | Set `NOOR_PUBLIC_URL=http://<address>:8787` in `/etc/noor-frame/server.env` and restart `noor-server`. |
-| The picture is sideways or upside down. | Run the installer again with `--rotate 90`, `180` or `270`. |
+| The picture is upside down. | Run the installer again with `--rotate 180`, or omit `--rotate` for normal landscape. Portrait rotation is not supported. |
 | The screen stays on at night with an HDMI display. | Some HDMI screens ignore the off signal. Choose **Night clock** instead. |
 | No athan sound. | Check the Pi's audio output and volume. The athan recordings are your own files; see [apps/frame/public/audio](../apps/frame/public/audio/README.md). Without them, a short chime plays. |

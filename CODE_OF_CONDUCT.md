@@ -37,6 +37,9 @@ choosing **Report a vulnerability** and noting that it's a conduct report.
 Or contact a maintainer directly through their GitHub profile. Reports are kept
 confidential.
 
+Maintainers: enable **Private vulnerability reporting** in the repository's GitHub
+**Settings → Security** so contributors can use the private reporting link.
+
 Maintainers may edit or remove contributions, and may warn, suspend or ban
 anyone whose behaviour breaks this code, in proportion to what happened.
 
