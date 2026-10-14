@@ -11,11 +11,11 @@ It runs on a cheap Android photo frame, a Raspberry Pi screen, or any TV or
 browser. AI features are optional, so households that don't want them never see
 them.
 
-> **Inspired by [Wes Bos](https://github.com/wesbos)'s
+> **Built on [Wes Bos](https://github.com/wesbos)'s
 > [photo-frame-dashboard](https://github.com/wesbos/photo-frame-dashboard).**
-> His family dashboard on a cheap photo frame started this project, and his
-> PF1007L research is the foundation of the Android frame guides here. See
-> [Credits](#credits-and-inspiration).
+> His code and dashboard design were the starting point for this project, and
+> his PF1007L research is the foundation of the Android frame guides here.
+> Without his open repo, Noor wouldn't exist. See [Credits](#credits-and-inspiration).
 
 > **Status:** early, but in daily use. Most parts work:
 >
@@ -225,13 +225,13 @@ integrations and support for more frames. Start with
 
 ## Credits and inspiration
 
-This project was inspired by **Wes Bos's
+noor-frame started from **Wes Bos's
 [photo-frame-dashboard](https://github.com/wesbos/photo-frame-dashboard)**. His
 write-up on turning a cheap Android photo frame into a family dashboard, and the
-dashboard he built for it, made us want to build one for our own home, centred
-on prayer times, the athan and the Quran. His PF1007L hardware notes made the
-Android frame work possible. Thank you, Wes. noor-frame is a separate project
-written from scratch, but it wouldn't exist without his.
+code and dashboard design he shared, were our starting point. We built on them to
+make a dashboard for our own home, centred on prayer times, the athan and the
+Quran. His PF1007L hardware notes made the Android frame work possible. Without
+his open repo, noor-frame wouldn't exist. Thank you, Wes.
 
 Data comes from these services:
 
